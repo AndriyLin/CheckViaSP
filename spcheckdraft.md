@@ -162,18 +162,20 @@ exactly the same as "after 2"
 
 *	(13)
 
-		H&P:	phase[t] = Sync2 && x.f |-> old && {x, v'} ⊆ reachables(roots[t]) && {v', old} ⊆ GREY U BLACK
+		H&P:	phase[t] = Sync2 && {x, v'} ⊆ reachables(roots[t]) && {v'} ⊆ GREY U BLACK && (x.f |-> old && old ∈ GREY U BLACK || ∃w· x.f |-> w && w ∈ GREY U BLACK)
 		C:		x.f |-> v'
 
-		sp = ∃·{x.f |-> v' && phase[t] = Sync2 && y |-> old && {x, v'} ⊆ reachables(roots[t]) && {v', old} ⊆ GREY U BLACK}
+		sp = ∃y·{x.f |-> v' && phase[t] = Sync2 && {x, v'} ⊆ reachables(roots[t]) && {v'} ⊆ GREY U BLACK && (y |-> old && old ∈ GREY U BLACK || ∃w· y |-> w && w ∈ GREY U BLACK)}
+
 		sp => H? success
 
 *	(14)
 
-		H&P:	stageC = Tracing && {v', x} ⊆ reachables(roots[t]) && {v', old} ⊆ GREY U BLACK && x.f |-> old
+		H&P:	stageC = Tracing && {v', x} ⊆ reachables(roots[t]) && {v'} ⊆ GREY U BLACK && (x.f |-> old && old ∈ GREY U BLACK || ∃w· x.f |-> w && w ∈ GREY U BLACK)
 		C:		x.f |-> v'
 
-		sp = ∃y·{x.f |-> v' && stageC = Tracing && {v', x} ⊆ reachables(roots[t]) && {v', old} ⊆ GREY U BLACK && y |-> old}
+		sp = ∃y·{x.f |-> v' && stageC = Tracing && {v', x} ⊆ reachables(roots[t]) && {v', old} ⊆ GREY U BLACK && (y |-> old && old ∈ GREY U BLACK || ∃w· y |-> w && w ∈ GREY U BLACK)}
+
 		sp => H? success
 
 *	(15) only increase set GREY, those already in GREY are not affected
@@ -215,30 +217,33 @@ exactly the same as "after 2"
 		
 *	(12)
 
-		H&P:	phase[t] = Sync1 && {x, v'} ⊆ reachables(roots[t]) && v' ∈ GREY && x.f |-> old && old ∈ GREY U BLACK
+		H&P:	phase[t] = Sync1 && {x, v'} ⊆ reachables(roots[t]) && v' ∈ GREY && (x.f |-> old || (∃w· x.f |-> w && w ∈ GREY U BLACK)) && old ∈ GREY U BLACK
 		C:		x.f |-> v'
 		
-		sp = ∃y·{x.f |-> v' && phase[t] = Sync1 && {x, v'} ⊆ reachables(roots[t]) && v' ∈ GREY && y |-> old && old ∈ GREY U BLACK}
+		sp = ∃y·{x.f |-> v' && phase[t] = Sync1 && {x, v'} ⊆ reachables(roots[t]) && v' ∈ GREY && (y |-> old || (∃w· y |-> w && w ∈ GREY U BLACK)) && old ∈ GREY U BLACK}
+
 		sp => H? success
 		
 *	(13)
 
 		// the same as (13) in "after 3"
 
-		H&P:	phase[t] = Sync2 && x.f |-> old && {x, v'} ⊆ reachables(roots[t]) && {v', old} ⊆ GREY U BLACK
+		H&P:	phase[t] = Sync2 && {x, v'} ⊆ reachables(roots[t]) && {v', old} ⊆ GREY U BLACK && (x.f |-> old || ∃w· x.f |-> w && w ∈ GREY U BLACK)
 		C:		x.f |-> v'
 
-		sp = ∃y·{x.f |-> v' && phase[t] = Sync2 && y |-> old && {x, v'} ⊆ reachables(roots[t]) && {v', old} ⊆ GREY U BLACK}
+		sp = ∃y·{x.f |-> v' && phase[t] = Sync2 && {x, v'} ⊆ reachables(roots[t]) && {v', old} ⊆ GREY U BLACK && (y |-> old || ∃w· y |-> w && w ∈ GREY U BLACK)}
+
 		sp => H? success
 
 *	(14)
 
 		// the same as (14) in "after 3"
 		
-		H&P:	stageC = Tracing && {v', x} ⊆ reachables(roots[t]) && {v', old} ⊆ GREY U BLACK && x.f |-> old
+		H&P:	stageC = Tracing && {v', x} ⊆ reachables(roots[t]) && {v', old} ⊆ GREY U BLACK && (x.f |-> old || ∃w· x.f |-> w && w ∈ GREY U BLACK)
 		C:		x.f |-> v'
 
-		sp = ∃y·{x.f |-> v' && stageC = Tracing && {v', x} ⊆ reachables(roots[t]) && {v', old} ⊆ GREY U BLACK && y |-> old}
+		sp = ∃y·{x.f |-> v' && stageC = Tracing && {v', x} ⊆ reachables(roots[t]) && {v', old} ⊆ GREY U BLACK && (y |-> old || ∃w· y |-> w && w ∈ GREY U BLACK)}
+
 		sp => H? success
 		
 *	(15) only add object into GREY, those already in GREY are not affected
@@ -287,28 +292,28 @@ exactly the same as "after 2"
 		
 *	(12)
 
-		H&P:	phase[t] = Sync1 && {old, v} ⊆ GREY U BLACK && {x, v'} ⊆ reachables(roots[t]) && v' ∈ GREY && x.f |-> old
+		H&P:	phase[t] = Sync1 && {old, v} ⊆ GREY U BLACK && {x, v'} ⊆ reachables(roots[t]) && v' ∈ GREY && (x.f |-> old || (∃w· x.f |-> w && w ∈ GREY U BLACK))
 		C:		x.f |-> v'
 		
-		sp = ∃y·{x.f |-> v' && phase[t] = Sync1 && {old, v} ⊆ GREY U BLACK && {x, v'} ⊆ reachables(roots[t]) && v' ∈ GREY && y |-> old}
+		sp = ∃y·{x.f |-> v' && phase[t] = Sync1 && {old, v} ⊆ GREY U BLACK && {x, v'} ⊆ reachables(roots[t]) && v' ∈ GREY && (y |-> old || (∃w· y |-> w && w ∈ GREY U BLACK)}
 		
 		sp => H? success
 
 *	(13)
 
-		H&P:	phase[t] = Sync2 && {x, v'} ⊆ reachables(roots[t]) && {v', old} ⊆ GREY U BLACK && x.f |-> old && {old, v} ⊆ GREY U BLACK
+		H&P:	phase[t] = Sync2 && {x, v'} ⊆ reachables(roots[t]) && {v', old} ⊆ GREY U BLACK && (x.f |-> old || ∃w· x.f |-> w && w ∈ GREY U BLACK) && {old, v} ⊆ GREY U BLACK
 		C:		x.f |-> v'
 		
-		sp = ∃y·{x.f |-> v' && phase[t] = Sync2 && {x, v'} ⊆ reachables(roots[t]) && {v', old} ⊆ GREY U BLACK && y |-> old && {old, v} ⊆ GREY U BLACK}
+		sp = ∃y·{x.f |-> v' && phase[t] = Sync2 && {x, v'} ⊆ reachables(roots[t]) && {v', old} ⊆ GREY U BLACK && (y |-> old || ∃w· y |-> w && w ∈ GREY U BLACK) && {old, v} ⊆ GREY U BLACK}
 		
 		sp => H? success
 
 *	(14)
 
-		H&P:	stageC = Tracing && {v', x} ⊆ reachables(roots[t]) && {v', old} ⊆ GREY U BLACK && x.f |-> old && {old, v} ⊆ GREY U BLACK
+		H&P:	stageC = Tracing && {v', x} ⊆ reachables(roots[t]) && {v', old} ⊆ GREY U BLACK && (x.f |-> old || ∃w· x.f |-> w && w ∈ GREY U BLACK) && {old, v} ⊆ GREY U BLACK
 		C:		x.f |-> v'
 		
-		sp = ∃y·{x.f |-> v' && stageC = Tracing && {v', x} ⊆ reachables(roots[t]) && {v', old} ⊆ GREY U BLACK && y |-> old && {old, v} ⊆ GREY U BLACK}
+		sp = ∃y·{x.f |-> v' && stageC = Tracing && {v', x} ⊆ reachables(roots[t]) && {v', old} ⊆ GREY U BLACK && (y |-> old || ∃w· y |-> w && w ∈ GREY U BLACK) && {old, v} ⊆ GREY U BLACK}
 		
 		sp => H? success
 
