@@ -270,3 +270,90 @@ exactly the same as "after 2"
 
 *	(29) change lastRead[t], independent
 
+
+##### after 5 (phase[t], stageC, x.f, GREY, BLACK)
+
+	H:	phase[t] = Sync2 || stageC = Tracing
+			=> (x.f |-> old || (∃w· x.f |-> w && w ∈ GREY U BLACK)) && {old, v} ⊆ GREY U BLACK
+		&&
+		phase[t] = Sync1
+			=> {old, v} ⊆ GREY U BLACK
+
+*	(3) change phaseC, independent
+*	(4) change phase[t'] of another mutator thread, independent
+*	(11)
+
+		H&P:	phase[t] = Async && stageC ∈ {RESTING, CLEAR_OR_MARKING} && (phase[t] = Sync2 || stageC = Tracing || phase[t] = Sync1) == false
+		
+*	(12)
+
+		H&P:	phase[t] = Sync1 && {old, v} ⊆ GREY U BLACK && {x, v'} ⊆ reachables(roots[t]) && v' ∈ GREY && x.f |-> old
+		C:		x.f |-> v'
+		
+		sp = ∃y·{x.f |-> v' && phase[t] = Sync1 && {old, v} ⊆ GREY U BLACK && {x, v'} ⊆ reachables(roots[t]) && v' ∈ GREY && y |-> old}
+		
+		sp => H? success
+
+*	(13)
+
+		H&P:	phase[t] = Sync2 && {x, v'} ⊆ reachables(roots[t]) && {v', old} ⊆ GREY U BLACK && x.f |-> old && {old, v} ⊆ GREY U BLACK
+		C:		x.f |-> v'
+		
+		sp = ∃y·{x.f |-> v' && phase[t] = Sync2 && {x, v'} ⊆ reachables(roots[t]) && {v', old} ⊆ GREY U BLACK && y |-> old && {old, v} ⊆ GREY U BLACK}
+		
+		sp => H? success
+
+*	(14)
+
+		H&P:	stageC = Tracing && {v', x} ⊆ reachables(roots[t]) && {v', old} ⊆ GREY U BLACK && x.f |-> old && {old, v} ⊆ GREY U BLACK
+		C:		x.f |-> v'
+		
+		sp = ∃y·{x.f |-> v' && stageC = Tracing && {v', x} ⊆ reachables(roots[t]) && {v', old} ⊆ GREY U BLACK && y |-> old && {old, v} ⊆ GREY U BLACK}
+		
+		sp => H? success
+
+*	(15) only add object into GREY, those already in GREY are not affected
+*	(16) only set object to BLACK, those already in BLACK are not affected
+*	(17)
+
+		// GREY(o) ==> GREY(w)
+		H&P_1:	stageC = Tracing && ∀t·phaseC = phase[t] = Async && w.color = BLACK && GREY(w) = n ≥ 1 && (∃w· x.f |-> w && w ∈ GREY U BLACK) && {old, v} ⊆ GREY U BLACK
+		C_1:	GREY(w) = n - 1
+		
+		sp_1 = ∃y·{GREY(w) = n-1 && stageC = Tracing && ∀t·phaseC = phase[t] = Async && w.color = BLACK && y = n ≥ 1 && (...) && {old, v} ⊆ GREY U BLACK}
+
+		sp_1 => H? success
+
+
+		// GREY(o) ==> GREY(old)
+		H&P_2:	stageC = Tracing && ∀t·phaseC = phase[t] = Async && old.color = BLACK && GREY(old) = n ≥ 1 && (.. || ..) && {old, v} ⊆ GREY U BLACK
+		C_2:	GREY(old) = n - 1
+		
+		sp_2 = ∃y·{GREY(old) = n-1 && stageC = Tracing && ∀t·phaseC = phase[t] = Async && old.color = BLACK && y = n ≥ 1 && (.. || ..) && {old, v} ⊆ GREY U BLACK}
+		
+		sp_2 => H? success
+		
+		// GREY(o) ==> GREY(v)
+		H&P_3:	stageC = Tracing && ∀t·phaseC = phase[t] = Async && v.color = BLACK && GREY(v) = n ≥ 1 && (.. || ..) && {old, v} ⊆ GREY U BLACK
+		C_3:	GREY(v) = n - 1
+		
+		sp_3 = ∃y·{GREY(v) = n-1 && stageC = Tracing && ∀t·phaseC = phase[t] = Async && v.color = BLACK && y = n ≥ 1 && (.. || ..) && {old, v} ⊆ GREY U BLACK}
+		
+		sp_3 => H? success
+
+*	(19)
+
+		H&P:	phaseC = Async && roots[t] ⊆ GREY && phase[t] = Sync2 && (.. || ..) && {old, v} ⊆ GREY U BLACK
+		C:		phase[t] = Async
+		
+		sp = ∃y·{phase[t] = Async && phaseC = Async && roots[t] ⊆ GREY && y = Sync2 && (.. || ..) && {old, v} ⊆ GREY U BLACK}
+		
+		sp => H? success
+
+*	(29) only change lastRead[t], independent
+
+
+##### after 6
+
+the same as "after 5"
+
