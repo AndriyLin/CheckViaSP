@@ -153,29 +153,27 @@ exactly the same as "after 2"
 *	(4) change phase[t'] of another mutator thread, independent
 *	(11)
 
-		H&P:	{(phase[t] = Sync2 || stageC = TRACING) && (phase[t] = Async && stageC ∈ {Resting, ClearOrMarking})} => false
+		H&P:	{(phase[t] = Sync2 || stageC = TRACING) && (phase[t] = Async && stageC ∈ {Resting, ClearOrMarking})} == false
 
 *	(12)
 
 		// phase[t] = Sync1 => stageC = ClearOrMarking
-		H&P:	(phase[t] = Sync2 || stageC = TRACING) && (phase[t] = Sync1)} => false
+		H&P:	(phase[t] = Sync2 || stageC = TRACING) && (phase[t] = Sync1)} == false
 
 *	(13)
 
-		H&P:	phase[t] = Sync2 && x.f |-> old && {v, old} ⊆ GREY U Black && {x, v} ⊆ reachables(roots[t])
-		C:		x.f |-> v
+		H&P:	phase[t] = Sync2 && x.f |-> old && {x, v'} ⊆ reachables(roots[t]) && {v', old} ⊆ GREY U BLACK
+		C:		x.f |-> v'
 
-		sp = ∃y·{x.f |-> v && phase[t] = Sync2 && y |-> old && {v, old} ⊆ GREY U Black && {x, v} ⊆ reachables(roots[t])}
-		   = ∃y·{x.f |-> v && phase[t] = Sync2 && {v, y} ⊆ GREY U Black && {x, v} ⊆ reachables(roots[t])}
+		sp = ∃·{x.f |-> v' && phase[t] = Sync2 && y |-> old && {x, v'} ⊆ reachables(roots[t]) && {v', old} ⊆ GREY U BLACK}
 		sp => H? success
-		
+
 *	(14)
 
-		H&P:	stageC = Tracing && {v, x} ⊆ reachables(roots[t]) && {v, old} ⊆ GREY U BLACK && x.f |-> old
-		C:		x.f |-> v
-		
-		sp = ∃y·{x.f |-> v && stageC = Tracing && {v, x} ⊆ reachables(roots[t]) && {v, old} ⊆ GREY U BLACK && y |-> old}
-		   = ∃y·{x.f |-> v && stageC = Tracing && {v, x} ⊆ reachables(roots[t]) && {v, y} ⊆ GREY U BLACK}
+		H&P:	stageC = Tracing && {v', x} ⊆ reachables(roots[t]) && {v', old} ⊆ GREY U BLACK && x.f |-> old
+		C:		x.f |-> v'
+
+		sp = ∃y·{x.f |-> v' && stageC = Tracing && {v', x} ⊆ reachables(roots[t]) && {v', old} ⊆ GREY U BLACK && y |-> old}
 		sp => H? success
 
 *	(15) only increase set GREY, those already in GREY are not affected
@@ -217,30 +215,30 @@ exactly the same as "after 2"
 		
 *	(12)
 
-		H&P:	phase[t] = Sync1 && {x, v} ⊆ reachables(roots[t]) && v ∈ GREY && x.f |-> old && old ∈ GREY U BLACK
-		C:		x.f |-> v
+		H&P:	phase[t] = Sync1 && {x, v'} ⊆ reachables(roots[t]) && v' ∈ GREY && x.f |-> old && old ∈ GREY U BLACK
+		C:		x.f |-> v'
 		
-		sp = ∃y·{x.f |-> v && phase[t] = Sync1 && {x, v} ⊆ reachables(roots[t]) && v ∈ GREY && y |-> old && old ∈ GREY U BLACK}
+		sp = ∃y·{x.f |-> v' && phase[t] = Sync1 && {x, v'} ⊆ reachables(roots[t]) && v' ∈ GREY && y |-> old && old ∈ GREY U BLACK}
 		sp => H? success
 		
 *	(13)
 
 		// the same as (13) in "after 3"
 
-		H&P:	phase[t] = Sync2 && x.f |-> old && {x, v} ⊆ reachables(roots[t]) && {v, old} ⊆ GREY U BLACK
-		C:		x.f |-> v
+		H&P:	phase[t] = Sync2 && x.f |-> old && {x, v'} ⊆ reachables(roots[t]) && {v', old} ⊆ GREY U BLACK
+		C:		x.f |-> v'
 
-		sp = ∃y·{x.f |-> v && phase[t] = Sync2 && y |-> old && {x, v} ⊆ reachables(roots[t]) && {v, old} ⊆ GREY U BLACK}
+		sp = ∃y·{x.f |-> v' && phase[t] = Sync2 && y |-> old && {x, v'} ⊆ reachables(roots[t]) && {v', old} ⊆ GREY U BLACK}
 		sp => H? success
 
 *	(14)
 
 		// the same as (14) in "after 3"
 		
-		H&P:	stageC = Tracing && {v, x} ⊆ reachables(roots[t]) && {v, old} ⊆ GREY U BLACK && x.f |-> old
-		C:		x.f |-> v
-		
-		sp = ∃y·{x.f |-> v && stageC = Tracing && {v, x} ⊆ reachables(roots[t]) && {v, old} ⊆ GREY U BLACK && y |-> old}
+		H&P:	stageC = Tracing && {v', x} ⊆ reachables(roots[t]) && {v', old} ⊆ GREY U BLACK && x.f |-> old
+		C:		x.f |-> v'
+
+		sp = ∃y·{x.f |-> v' && stageC = Tracing && {v', x} ⊆ reachables(roots[t]) && {v', old} ⊆ GREY U BLACK && y |-> old}
 		sp => H? success
 		
 *	(15) only add object into GREY, those already in GREY are not affected
@@ -271,5 +269,4 @@ exactly the same as "after 2"
 		sp => H? success
 
 *	(29) change lastRead[t], independent
-
 
