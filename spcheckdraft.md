@@ -217,10 +217,10 @@ exactly the same as "after 2"
 		
 *	(12)
 
-		H&P:	phase[t] = Sync1 && {x, v'} ⊆ reachables(roots[t]) && v' ∈ GREY && (x.f |-> old || (∃w· x.f |-> w && w ∈ GREY U BLACK)) && old ∈ GREY U BLACK
+		H&P:	phase[t] = Sync1 && {x, v'} ⊆ reachables(roots[t]) && v' ∈ GREY && x.f |-> _ && old ∈ GREY U BLACK
 		C:		x.f |-> v'
 		
-		sp = ∃y·{x.f |-> v' && phase[t] = Sync1 && {x, v'} ⊆ reachables(roots[t]) && v' ∈ GREY && (y |-> old || (∃w· y |-> w && w ∈ GREY U BLACK)) && old ∈ GREY U BLACK}
+		sp = ∃y·{x.f |-> v' && phase[t] = Sync1 && {x, v'} ⊆ reachables(roots[t]) && v' ∈ GREY && y |-> _ && old ∈ GREY U BLACK}
 
 		sp => H? success
 		
@@ -292,10 +292,10 @@ exactly the same as "after 2"
 		
 *	(12)
 
-		H&P:	phase[t] = Sync1 && {old, v} ⊆ GREY U BLACK && {x, v'} ⊆ reachables(roots[t]) && v' ∈ GREY && (x.f |-> old || (∃w· x.f |-> w && w ∈ GREY U BLACK))
+		H&P:	phase[t] = Sync1 && {old, v} ⊆ GREY U BLACK && {x, v'} ⊆ reachables(roots[t]) && v' ∈ GREY && x.f |-> _
 		C:		x.f |-> v'
 		
-		sp = ∃y·{x.f |-> v' && phase[t] = Sync1 && {old, v} ⊆ GREY U BLACK && {x, v'} ⊆ reachables(roots[t]) && v' ∈ GREY && (y |-> old || (∃w· y |-> w && w ∈ GREY U BLACK)}
+		sp = ∃y·{x.f |-> v' && phase[t] = Sync1 && {old, v} ⊆ GREY U BLACK && {x, v'} ⊆ reachables(roots[t]) && v' ∈ GREY && y |-> _}
 		
 		sp => H? success
 
