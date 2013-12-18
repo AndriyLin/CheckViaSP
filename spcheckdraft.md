@@ -444,3 +444,40 @@ the same as "after 5"
 
 *	(29) only change lastRead[t], independent
 
+
+### Trace
+
+**TODO**
+
+
+### *C*: EmptyCollectorStack()
+
+##### before 7 (bucket[C], reachables(), GREY)
+
+	H:	bucket[C] = X && reachables(X) = Y && X ⊆ GREY
+
+*	(6) change phase[t], independent
+*	(11) change x.f, independent
+*	(12) change x.f, independent
+*	(13) change x.f, independent
+*	(14) change x.f, independent
+*	(15) only add object to GREY, those already in GREY are not affected
+*	(19) change phase[t], independent
+*	(25) change a register & roots[t], independent
+*	(26) change freelist & obj's color, independent
+*	(27) change freelist & obj's color, independent
+*	(31) change bucket[t], independent
+
+
+##### after 7 (bucket[C])
+
+	H:	bucket[C] ≠ ∅
+
+*	(6) change phase[t], independent
+*	(11)..(14) change x.f, independent
+*	(15) change GREY, independent
+*	(19) change phase[t], independent
+*	(25) change register & roots[t], independent
+*	(26)(27) change freelist & obj's color, independent
+*	(31) change bucket[t], independent
+
