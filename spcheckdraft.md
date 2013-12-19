@@ -7,6 +7,130 @@
 
 -----
 
+### Template
+
+**relies for mutator thread**
+
+*	(3)
+*	(4)
+*	(11)
+*	(12)
+*	(13)
+*	(14)
+*	(15)
+*	(16)
+*	(17)
+*	(19)
+*	(29)
+
+**relies for collector thread (duplication are removed)**
+
+*	(6)
+*	(25)
+*	(26)
+*	(27)
+*	(31)
+
+-----
+
+### All Invariants
+
+##### Invariant (1) (phase[t], phaseC)
+
+	H:	not in handshake => ∀t· phase[t] = phaseC
+
+*	(3) in handshake
+*	(4) in handshake
+*	(11)..(14) change o.f, independent
+*	(15) change GREY, independent
+*	(16) change o.color, independent
+*	(17) change GREY, independent
+*	(19) in handshake
+*	(29) change lastRead[t], independent
+
+*	(6) in handshake
+*	(25) change register & roots[t], independent
+*	(26)(27) change freelist & o.color, independent
+*	(31) change lastWrite[t], independent
+
+
+##### Invariant (2) (phase[t], phaseC)
+
+	H:	∀t· phase[t] ≤ phaseC ≤ phase[t] (+) 1
+
+*	(3)
+
+		H&P:	∀t· phase[t] = phaseC = X
+		C:		phaseC = X + 1
+		
+		sp = ∃y·{phaseC = X + 1 && ∀t· phase[t] = y = X}
+
+	sp => H? success
+
+*	(4)
+
+		H&P:	∃t· phase[t'] (+) 1 = phaseC = X
+		C:		phase[t'] = phaseC = X
+		
+		sp = ∃y·{phase[t'] = X && y (+) 1 = phaseC = X}
+
+	sp => H? success
+
+*	(11)..(14) change o.f, independent
+*	(15) change GREY, independent
+*	(16) change o.color, independent
+*	(17) change GREY, independent
+*	(19)
+
+		H&P:	phaseC = Async && roots[t] ⊆ GREY && phase[t] = Sync2
+		C:		phase[t] = Async
+		
+		sp = ∃y·{phase[t] = Async && phaseC = Async && roots[t] ⊆ GREY && y = Sync2}
+
+	sp => H? success
+
+*	(29) change lastRead[t], independent
+
+*	(6)
+
+		H&P:	∃t· phase[t] (+) 1 = phaseC = X
+		C:		phase[t] = X
+		
+		sp = ∃y·{phase[t] = X && y (+) 1 = phaseC = X}
+
+	sp => H? success
+
+*	(25) change register & roots[t], independent
+*	(26)(27) change freelist and o.color, independent
+*	(31) change lastWrite[t], independent
+
+
+##### Invariant (8) (stageC, phaseC)
+
+	H:	stageC ∈ {SWEEPING, RESTING} => phaseC = Async && not_in_handshake
+
+**TODO**
+
+*	(3)
+*	(4)
+*	(11)
+*	(12)
+*	(13)
+*	(14)
+*	(15)
+*	(16)
+*	(17)
+*	(19)
+*	(29)
+
+*	(6)
+*	(25)
+*	(26)
+*	(27)
+*	(31)
+
+-----
+
 ### *t*: cooperate()
 
 // ### is followed by a function name, the following is to prove the assertions in this function. t means mutator thread, C means collector thread.
