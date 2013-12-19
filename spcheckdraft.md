@@ -444,11 +444,7 @@ the same as "after 5"
 
 *	(29) only change lastRead[t], independent
 
-
-### Trace
-
-**TODO**
-
+-----
 
 ### *C*: EmptyCollectorStack()
 
@@ -713,3 +709,12 @@ Therefore R is proved with respect to all relies, from now on, R can be used wit
 *	(27) set obj's color to BLACK, those already in BLACK are not affected
 *	(31) change bucket[t], independent
 
+-----
+
+### *C*: Trace
+
+##### after 3 (bucket[t], GREY)
+
+	H:	{bucket[t] ≠ ∅ && GREY ≠ ∅} △= Q
+
+**TODO**
