@@ -1,41 +1,107 @@
 
 **Author**: Xuankang Lin
 
-**What is this**: I am using strongest post-condition to prove that the assertions are not invalidated by the rely/guarantees. This is written in markdown so it's not fully formatted. The (3)s are the labels for the rely/guarantee in the .tex and 
+**What is this**: I am using strongest post-condition to prove that the assertions are not invalidated by the rely/guarantees. This is written in markdown so it's not fully formatted.
 
 **Rule: sp(H^P, C) => H**
 
 -----
 
-### Template
+### Relies
 
-**relies for mutator thread**
+in the form of Precondition & Command
 
-*	(3)
-*	(4)
-*	(11)
-*	(12)
-*	(13)
-*	(14)
-*	(15)
-*	(16)
-*	(17)
-*	(19)
-*	(29)
+##### relies for mutator thread
 
-**relies for collector thread (duplication are removed)**
+*	(3) Phase[t]
 
-*	(6)
-*	(25)
-*	(26)
+		{∀t· phase[t] = phaseC =X}
+			phaseC = X (+) 1
+
+*	(4) Phase[t]
+
+		{∃t'· t' ≠ t && phase[t'] (+) 1 = phaseC = X}
+			phase[t'] = X
+
+*	(11) UpdateResting[t]
+
+		{phase[t] = Async && stageC ∈ {RESTING, CLEAR_OR_MARKING} && {o, v} ⊆ reachables(roots[t]) && o.f |-> _}
+			o.f |-> v
+
+*	(12) UpdateS1[t]
+
+		{phase[t] = Sync1 && {o, v} ⊆ reachables(roots[t]) && v ∈ GREY && o.f |-> _}
+			o.f |-> v
+
+*	(13) UpdateS2[t]
+
+		{phase[t] = Sync2 && {o, v} ⊆ reachables(roots[t]) && {v, o'} ⊆ GREY U BLACK && o.f |-> o'}
+			o.f |-> v
+
+*	(14) UpdateTracing
+
+		{phase[t] = Async && stageC ∈ {TRACING, SWEEPING} && {v, o} ⊆ reachables(roots[t]) && {v, o'} ⊆ GREY U BLACK && o.f |-> o'}
+			o.f |-> v
+
+*	(15) MarkGrey[t]
+
+		{(phase[t] ≠ Async || stageC ≠ RESTING) && o ∈ reachables(roots[t]) && GREY = R}
+			GREY = R (+) {o}
+
+*	(16) MarkBlack
+
+		{stageC = TRACING && (∀t ∈ T · phaseC = phase[t] = Async) && (∀f ∈ fields(o), o' ∈ Obj · o.f |-> o' => o' ∈ GREY U BLACK) && o.color = WHITE && GREY(o) = n ≥ 1}
+			o.color = BLACK
+
+*	(17) RemoveGrey
+
+		{stageC = TRACING && (∀t ∈ T · phaseC = phase[t] = Async) && o.color = BLACK && GREY(o) = n ≥ 1}
+			GREY(o) = n - 1
+
+*	(19) PhaseS2[t]
+
+		{phaseC = Async && roots[t] ⊆ GREY && phase[t] = Sync2}
+			phase[t] = Async
+
+*	(29) Bucket[t]
+
+		{lastRead[t] = v && lastWrite[t] = v' && v + n ≤ v'}
+			lastRead[t] = v + n
+
+
+##### relies for collector thread (duplication are removed)
+
+*	(6) Phase[C]
+
+		{∃t · phase[t] (+) 1 = phaseC = X}
+			phase[t] = X
+
+*	(11)(12)(13)(14)(15)(19) duplicated
+*	(25) Load[t]
+
+		{r0 = o && r1 = o' && f ∈ fields(o) && [o' + f] |-> o'' && {o, o'} ⊆ roots[t] = R && (phase[t] = Async && o''.color = WHITE => o'' ∈ reachables(GREY))}
+			r0 = o'' && roots[t] = R (-) {o} (+) {o''}
+
+*	(26) NewWhite[t]
+
+		{freelist |-> FREELIST && o ∈ FREELIST && o.color = BLUE && (phase[t] ≠ Async || stageC = CLEAR_OR_MARKING)}
+			freelist |-> FREELIST / {o} && o.color = WHITE
+
 *	(27)
-*	(31)
+
+		{freelist |-> FREELIST && o ∈ FREELIST && o.color = BLUE && (phase[t] = Async && stageC ≠ CLEAR_OR_MARKING)}
+			freelist |-> FREELIST / {o} && o.color = BLACK
+
+*	(31) Bucket[C]
+
+		{∃t ∈ T · (lastWrite[t] = v && v + n ≤ BUCKET_SIZE)}
+			lastWrite[t] = v + n
 
 -----
 
 ### All Invariants
 
-##### Invariant (1) (phase[t], phaseC)
+##### Invariant (1) (phase[t], phaseC, in_handshake)
 
 	H:	not in handshake => ∀t· phase[t] = phaseC
 
@@ -52,6 +118,8 @@
 *	(25) change register & roots[t], independent
 *	(26)(27) change freelist & o.color, independent
 *	(31) change lastWrite[t], independent
+
+Note: in_handshake is not used so far, this invariant can be ignored
 
 
 ##### Invariant (2) (phase[t], phaseC)
@@ -105,13 +173,103 @@
 *	(31) change lastWrite[t], independent
 
 
-##### Invariant (8) (stageC, phaseC)
+##### Invariant (8)(9)(10) (stageC, phaseC, in_handshake)
 
-	H:	stageC ∈ {SWEEPING, RESTING} => phaseC = Async && not_in_handshake
+	(8):	stageC ∈ {SWEEPING, RESTING} => phaseC = Async && not_in_handshake
+
+	(9):	stageC = CLEAR_OR_MARKING => phaseC ∈ {Async, Sync1, Sync2}
+
+	(10):	stageC = Tracing => phaseC ∈ {Sync2, Async}
+
+These three can only modified in collector thread, therefore there is indeed no need to check via rely-guarantee!!
+
+
+##### Invariant (18) (phase[t], stageC, reachables(), roots[t], BLACK, GREY)
+
+	H:	phase[t] = Async && stageC ≠ CLEAR_OR_MARKING => reachables(roots[t]) ⊆ BLACK U reachables(GREY)
+
+*	(3) change phaseC, independent
+*	(4)
+
+		H&P:	phase[t] = Async && phaseC= Sync1 && ..
+		C:		phase[t] = Sync1
+		
+		sp = ∃y·{phase[t] = Sync1 && y = Async && phaseC = Sync1 && ..}
+
+	sp => H? success
+
+*	(11)
+
+		H&P:	phase[t] = Async && stageC = RESTING && {o, v} ⊆ reachables(roots[t]) && reachables(roots[t]) ⊆ BLACK U reachables(GREY)
+		C:		o.f |-> v
+
+		sp = ∃y·{o.f |-> v && phase[t] = Async && stageC = RESTING && {o, v} ⊆ reachables(roots[t]) && reachables(roots[t]) ⊆ BLACK U reachables(GREY)}
+
+	sp => H? success
+
+*	(12)
+
+		H&P:	{phase[t] = Sync1 && phase[t] = Async && ..} == false
+
+*	(13)
+
+		H&P:	{phase[t] = Sync2 && phase[t] = Async && ..} == false
+
+*	(14)
+
+		H&P:	phase[t] = Async && stageC ∈ {Tracing, Sweeping} && {v, o} ⊆ reachables(roots[t]) && {v, o'} ⊆ GREY U BLACK && o.f |-> o' && reachables(roots[t]) ⊆ BLACK U reachables(GREY)
+		C:		o.f |-> v
+
+		sp = ∃y·{o.f |-> v && phase[t] = Async && stageC ∈ {Tracing, Sweeping} && {v, o} ⊆ reachables(roots[t]) && {v, o'} ⊆ GREY U BLACK && y |-> o' && reachables(roots[t]) ⊆ BLACK U reachables(GREY)}
+
+	sp => H? success
+
+*	(15) only add object into GREY, those already in GREY are not affected
+*	(16) only set o.color to BLACK, those already in BLACK are not affected
+*	(17)
+
+		H&P:	stageC = Tracing && ∀t· phase[t] = phaseC = Async && o.color = BLACK && GREY(o) = n ≥ 1 && o ∈ reachables(roots[t]) && reachables(roots[t]) ⊆ BLACK U reachables(GREY)
+		C:		GREY(o) = n - 1
+
+		sp = ∃y·{GREY(o) = n-1 && stageC = Tracing && ∀t· phase[t] = phaseC = Async && o.color = BLACK && y = n ≥ 1 && o ∈ reachables(roots[t]) && reachables(roots[t]) ⊆ BLACK U reachables(GREY)}
+
+	sp => H? success
+
+*	(19)
+
+		H&P:	{phase[t] = Sync2 && phase[t] = Async && ..} == false
+
+*	(29) change lastRead[t], independent
+
+*	(6)
+
+		H&P:	phase[t] = Async && phaseC= Sync1 && ..
+		C:		phase[t] = Sync1
+		
+		sp = ∃y·{phase[t] = Sync1 && y = Async && phaseC = Sync1 && ..}
+
+	sp => H? success
+
+*	(25)
+
+		H&P:	phase[t] = Async && stageC ≠ CLEAR_OR_MARKING && r0 = o && r1 = o' && f ∈ fields(o) && [o' + f] |-> o'' && {o, o'} ⊆ roots[t] = R && (o''.color = WHITE => o'' ∈ reachables(GREY) && reachables(roots[t]) ⊆ BLACK U reachables(GREY))
+		C:		roots[t] = R (-) {o} (+) {o''}	// assignment to r0 is omitted here
+		
+		sp = ∃y·{roots[t] = R (-) {o} (+) {o''} && phase[t] = Async && stageC ≠ CLEAR_OR_MARKING && r0 = o && r1 = o' && f ∈ fields(o) && [o' + f] |-> o'' && {o, o'} ⊆ y = R && (o''.color = WHITE => o'' ∈ reachables(GREY) && reachables(y) ⊆ BLACK U reachables(GREY))}
+
+	sp => H? success when there is an extra constraint saying o''.color can only be either WHITE or BLACK, never BLUE. **TODO** remove this when the extra constraint is added
+
+*	(26)(27) change freelist & o.color, independent
+*	(31) change lastWrite[t], independent
+
+
+##### Invariant (20) (reachables(), roots[t], o.color, GREY, phase[t], stageC, GREY, BLACK)
+
+	H:	∀ o ∈ Obj, t ∈ 	T· o ∈ reachables(roots[t]) && o.color = WHITE && o ∉ GREY => phase[t] ≠ Async || stageC = CLEAR_OR_MARKING || (∃o' ∈ GREY/BLACK· o ∈ reachables(o'))
 
 **TODO**
 
-*	(3)
+*	(3) 
 *	(4)
 *	(11)
 *	(12)
@@ -128,6 +286,183 @@
 *	(26)
 *	(27)
 *	(31)
+
+
+##### Invariant (21) (phase[t], stageC, roots[t], BLACK, GREY)
+
+	H:	∀t ∈ T· phase[t] = Async && stageC ≠ CLEAR_OR_MARKING => reachables(U roots[t]) ⊆ BLACK U reachables(GREY)
+
+**TODO**
+
+*	(3) 
+*	(4)
+*	(11)
+*	(12)
+*	(13)
+*	(14)
+*	(15)
+*	(16)
+*	(17)
+*	(19)
+*	(29)
+
+*	(6)
+*	(25)
+*	(26)
+*	(27)
+*	(31)
+
+
+##### Invariant (22) (phaseC, stageC, roots[t], reachables() GREY, BLACK, rootToMark)
+
+	H:	∀t ∈ T· phaseC = Async && stageC ≠ CLEAR_OR_MARKING => roots[t] ⊆ reachables(GREY U rootToMark) U BLACK
+
+*	(3)
+
+		H&P:	∀t· phase[t] = phaseC = Async && ..
+		C:		phaseC = Sync1
+		
+		sp = ∃y·{phaseC = Sync1 && ∀t· phase[t] = Async && ..}
+
+	sp => H? success
+
+*	(4) change phase[t], independent
+*	(11)..(14) change o.f, independent
+*	(15) only add object into GREY, those already in GREY are not affected
+*	(16) only set o.color to BLACK, those already in BLACK are not affected
+*	(17)
+
+		H&P:	phaseC = Async && stageC = Tracing && o ∈ roots[t] && o.color = BLACK && GREY(o) = n ≥ 1 && roots[t] ⊆ reachables(GREY U rootToMark) U BLACK
+		C:		GREY(o) = n - 1
+		
+		sp = ∃y·{GREY(o) = n-1 && phaseC = Async && stageC = Tracing && o ∈ roots[t] && o.color = BLACK && y = n ≥ 1 && roots[t] ⊆ reachables(GREY U rootToMark) U BLACK}
+
+	sp => H? success
+
+*	(19) change phase[t], independent
+*	(29) change lastRead[t], independent
+
+*	(6) change phase[t], independent
+*	(25)
+
+		H&P:	.. && {o, o'} ⊆ roots[t] = R && phaseC = Async && stageC ≠ CLEAR_OR_MARKING && roots[t] ⊆ reachables(GREY U rootToMark) U BLACK && (phase[t] = Async && o''.color = white => o'' ∈ reachables(GREY))
+		C:		roots[t] = R (-) {o} (+) {o''}	// assignment of r0 is omitted
+		
+		sp = ∃y·{roots[t] = R (-) {o} (+) {o''} && .. && {o, o'} ⊆ y = R && phaseC = Async && stageC ≠ CLEAR_OR_MARKING && y ⊆ reachables(GREY U rootToMark) U BLACK && (phase[t] = Async && o''.color = white => o'' ∈ reachables(GREY))}
+
+	sp => H? **TODO** **failed**?? too much..
+
+*	(26)(27)
+
+		H&P:	{o ∈ roots[t] && o.color = BLUE} == false
+
+	some invariant is needed to point out that BLUE objects can only be used in allocation **TODO**
+
+*	(31) change lastWrite[t], independent
+
+
+##### Invariant (23) (stageC, o.color)
+
+	H:	stageC = RESTING => (∀ o ∈ Obj· o.color ∈ {BLUE, BLACK})
+
+*	(3) change phaseC, independent
+*	(4) change phase[t], independent
+*	(11)..(14) change o.f, independent
+*	(15) change GREY, independent
+*	(16) set o.color to BLACK, those already in BLACK are not affected
+*	(17) change GREY, independent
+*	(19) change phase[t], independent
+*	(29) change lastRead[t], independent
+
+*	(6) change phase[t], independent
+*	(25) change register & roots[t], independent
+*	(26)(27)
+
+		H&P:	{o.color ∈ {BLUE, BLACK} && o.color = BLUE && ..} == false
+
+*	(31) change lastWrite[t], independent
+
+
+##### Invariant (24) (stageC, reachables(), roots[t], o.color)
+
+	H:	stageC = RESTING => (∀ o ∈ Obj · (o ∈ U_t∈T reachables(roots[t]) => o.color = BLACK))
+
+*	(3) change phaseC, independent
+*	(4) change phase[t], independent
+*	(11)..(14)
+
+		H&P:	stageC = RESTING && {o, v} ⊆ reachables(roots[t]) && (∀ o ∈ Obj· (o ∈ U_t∈T reachables(roots[t]) => o.color = BLACK))
+		C:		o.f |-> v
+
+		sp = ∃y·{o.f |-> v && stageC = RESTING && {o, v} ⊆ reachables(roots[t]) && v.color = BLACK && ..}
+
+	sp => H? success
+
+*	(15) change GREY, independent
+*	(16) only set color to BLACK, those already in BLACK are not affected
+*	(17) change GREY, independent
+*	(19) change phase[t], independent
+*	(29) change lastRead[t], independent
+
+*	(6) change phase[t], independent
+*	(25)
+
+		H&P:	r0 = o && r1 = o' && f ∈ fields(o) && [o' + f] |-> o'' && {o, o'} ⊆ roots[t] = R && (phase[t] = Async && o''.color = WHITE => o'' ∈ reachables(GREY)) && stageC = RESTING && ∀ob ∈ Obj· (ob ∈ U_t∈T reachables(roots[t]) => ob.color = BLACK)
+		C:		roots[t] = R (-) {o} (+) {o''}	// assignment of r0 is omitted
+		
+		sp = ∃y·{roots[t] = R (-) {o} (+) {o''} && r0 = o && r1 = o' && f ∈ fields(o) && [o' + f] |-> o'' && {o, o'} ⊆ y = R && (phase[t] = Async && o''.color = WHITE => o'' ∈ reachables(GREY)) && stageC = RESTING && ∀ob ∈ Obj· (ob ∈ U_t∈T reachables(y) => ob.color = BLACK)}
+
+	sp => H? success (key: o'' previously ∈ reachables(roots[t])? yes)
+
+*	(26)
+
+		H&P:	{stageC = CLEAR_OR_MARKING && stageC = RESTING && ..} == false
+
+*	(27)
+
+		H&P:	phase[t] = Async && stageC = RESTING && freelist |-> FREELIST && o ∈ FREELIST && o.color = BLUE && ∀ o ∈ Obj · (o ∈ U_t∈T reachables(roots[t]) => o.color = BLACK)
+		C:		o.color = BLACK	// change of freelist is omitted
+
+		sp = ∃y·{o.color = BLACK && phase[t] = Async && stageC = RESTING && freelist |-> FREELIST && o ∈ FREELIST && y = BLUE && ∀ o ∈ Obj · (ob ∈ U_t∈T reachables(roots[t]) => ob.color = BLACK)}
+
+	sp => H? success
+
+*	(31) change lastWrite[t], independent
+
+
+##### Invariant (28) (lastRead[t], lastWrite[t])
+
+	H:	lastRead[t] ≤ lastWrite[t]
+
+*	(3) change phaseC, independent
+*	(4) change phase[t], independent
+*	(11)..(14) change o.f, independent
+*	(15) change GREY, independent
+*	(16) change o.color, independent
+*	(17) change GREY, independent
+*	(19) change phase[t], independent
+*	(29)
+
+		H&P:	lastRead[t] = v && lastWrite[t] = v' && v + n ≤ v'
+		C:		lastRead[t] = v + n
+		
+		sp = ∃y·{lastRead[t] = v + n && y = v && lastWrite[t] = v' && v + n ≤ v'}
+
+	sp => H? success
+
+
+*	(6) change phase[t], independent
+*	(25) change register & roots[t], independent
+*	(26)(27) change freelist & o.color, independent
+*	(31)
+
+		H&P:	lastWrite[t] = v && v + n ≤ BUCKET_SIZE && lastRead[t] ≤ lastWrite[t]
+		C:		lastWrite[t] = v + n
+		
+		sp = ∃y·{lastWrite[t] = v + n && y = v && v + n ≤ BUCKET_SIZE && lastRead[t] ≤ y}
+
+	sp => H? success
+
 
 -----
 
