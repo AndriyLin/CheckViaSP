@@ -717,4 +717,94 @@ Therefore R is proved with respect to all relies, from now on, R can be used wit
 
 	H:	{bucket[t] ≠ ∅ && GREY ≠ ∅} △= Q
 
-**TODO**
+*	(6) change phase[t], independent
+*	(11)..(14) change ob.f, independent
+*	(15)
+
+		H&P:	o ∈ reachables(roots[t]) && GREY = R && GREY ≠ ∅ && bucket[t] ≠ ∅
+		C:		GREY = R (+) {o}
+		
+		sp = ∃y·{GREY = y (+) {o} && o ∈ reachables(roots[t]) && y = R && y ≠ ∅ && bucket[t] ≠ ∅}
+
+	sp => H? success
+
+*	(19) change phase[t], independent
+*	(25) change register & roots[t], independent
+*	(26)(27) change ob.color, independent
+*	(31)
+
+		H&P:	lastWrite[t] = v && v + n ≤ BUCKET_SIZE && bucket[t] ≠ ∅ && GREY ≠ ∅
+		C:		lastWrite[t] = v + n
+		
+		sp = ∃y·{lastWrite[t] = v + n && y = v && v + n ≤ BUCKET_SIZE && bucket[t] ≠ ∅ && GREY ≠ ∅}
+
+	sp => H? success
+
+So Q is proved correct with respect to all relies, from now on, Q can be used without checking again.
+
+
+##### after 4 (GREY, bucket[t])
+
+	H:	Q && o ∈ GREY && o ∈ bucket[t]
+
+*	(6) change phase[t], independent
+*	(11)..(14) change ob.f, independent
+*	(15) only add object into GREY, those already in GREY are not affected
+*	(19) change phase[t], independent
+*	(25) change register & roots[t], independent
+*	(26)(27) change ob.color, independent
+*	(31)
+
+		H&P:	lastWrite[t] = v && v + n ≤ BUCKET_SIZE && o ∈ GREY && o ∈ bucket[t]
+		C:		lastWrite[t] = v + n
+		
+		sp = ∃y·{lastWrite[t] = v + n && y = v && v + n ≤ BUCKET_SIZE && o ∈ GREY && o ∈ bucket[t]}
+
+	sp => H? success
+
+
+##### after 5 (o.color, GREY, bucket[t])
+
+	H:	Q && o.color = WHITE && o ∈ GREY && o ∈ bucket[t]
+
+*	(6) change phase[t], independent
+*	(11)..(14) change ob.f, independent
+*	(15) only add object into GREY, those already in GREY are not affected
+*	(19) change phase[t], independent
+*	(25) change register & roots[t], independent
+*	(26)(27)
+
+		H&P:	{o.color = WHITE && o.color = BLUE && ..} == false
+
+*	(31)
+
+		H&P:	lastWrite[t] = v && v + n ≤ BUCKET_SIZE && o ∈ GREY && o ∈ bucket[t] && o.color = WHITE
+		C:		lastWrite[t] = v + n
+		
+		sp = ∃y·{lastWrite[t] = v + n && y = v && v + n ≤ BUCKET_SIZE && o ∈ GREY && o ∈ bucket[t] && o.color = WHITE}
+
+	sp => H? success
+
+
+##### after 6 (o.color, GREY, bucket[t], bucket[C])
+
+	H:	Q && o.color = WHITE && o ∈ GREY && o ∈ bucket[t] o ∈ bucket[C]
+
+*	(6) change phase[t], independent
+*	(11)..(14) change o.f, independent
+*	(15) only add object into GREY, those already in GREY are not affected
+*	(19) change phase[t], independent
+*	(25) change register & roots[t], independent
+*	(26)(27)
+
+		H&P:	{o.color = WHITE && o.color = BLUE && ..} == false
+
+*	(31)
+
+		H&P:	lastWrite[t] = v && v + n ≤ BUCKET_SIZE && o.color = WHITE && o ∈ GREY && o ∈ bucket[t] && o ∈ bucket[C]
+		C:		lastWrite[t] = v + n
+		
+		sp = ∃y·{lastWrite[t] = v + n && y = v && v + n ≤ BUCKET_SIZE && o.color = WHITE && o ∈ GREY && o ∈ bucket[t] && o ∈ bucket[C]}
+
+	sp => H? success
+
