@@ -3,7 +3,7 @@
 
 **What is this**: I am using strongest post-condition to prove that the assertions are not invalidated by the rely/guarantees. This is written in markdown so it's not fully formatted.
 
-**Rule: sp(H^P, C) => H**
+**Rule**: sp(H&P, C) =?> H
 
 -----
 
@@ -98,6 +98,8 @@ in the form of Precondition & Command
 			lastWrite[t] = v + n
 
 -----
+
+<!-- Above are the resources, the followings are the proofs -->
 
 ### All Invariants
 
@@ -263,29 +265,127 @@ These three can only modified in collector thread, therefore there is indeed no 
 *	(31) change lastWrite[t], independent
 
 
-##### Invariant (20) (reachables(), roots[t], o.color, GREY, phase[t], stageC, GREY, BLACK)
+##### Invariant (20) (reachables(), roots[t], o.color, GREY, phase[t], stageC, BLACK)
 
-	H:	∀ o ∈ Obj, t ∈ 	T· o ∈ reachables(roots[t]) && o.color = WHITE && o ∉ GREY => phase[t] ≠ Async || stageC = CLEAR_OR_MARKING || (∃o' ∈ GREY/BLACK· o ∈ reachables(o'))
+	H:	∀ o ∈ Obj, t ∈ 	T ·
+			o ∈ reachables(roots[t])
+		&&	o.color = WHITE
+		&&	o ∉ GREY
+			=>
+			phase[t] ≠ Async 
+		||	stageC = CLEAR_OR_MARKING
+		||	(∃o' ∈ GREY/BLACK· o ∈ reachables(o'))
 
-**TODO**
+Note that the invariant is only meaningful when "stageC ≠ CLEAR_OR_MARKING" && "phase[t] = Async"!
 
-*	(3) 
-*	(4)
-*	(11)
-*	(12)
-*	(13)
-*	(14)
-*	(15)
-*	(16)
-*	(17)
-*	(19)
-*	(29)
+*	(3) change phaseC, independent
+*	(4)(6)
 
-*	(6)
+	Only changing "phase[t] ≠ Async" from "true" to "not true" is meaningful. Otherwise it won't change anything.
+
+	So:
+
+		H&P:	phase[t] (+) 1 = phaseC = Async
+			&&	stageC ≠ CLEAR_OR_MARKING
+			&&	∀ o ∈ Obj · o ∈ reachables(roots[t]) && o.color = WHITE && o ∉ GREY
+				=>	phase[t] ≠ Async || (∃o' ∈ GREY/BLACK · o ∈ reachables(o'))
+
+		C:		phase[t] = Async
+
+		sp = ∃y·{
+				phase[t] = Async
+			&&	y (+) 1 = phaseC = Async
+			&&	stageC ≠ CLEAR_OR_MARKING
+			&&	∀ o ∈ Obj · o ∈ reachables(roots[t]) && o.color = WHITE && o ∉ GREY
+				=>	y ≠ Async || (∃o' ∈ GREY/BLACK · o ∈ reachables(o'))			}
+
+	sp => H? success
+
+*	(11)(12)(13)(14) change o.f, independent
+*	(15) only add object into GREY, since there is a constraint "o ∉ GREY", independent
+*	(16) independent for o.color, but not for o'.color
+
+		H&P:	stageC = TRACING
+			&&	∀ t · phase[t] = phaseC = Async
+			&&	∀ f ∈ fields(o'), o'' ∈ Obj · o'.f |-> o'' => o'' ∈ GREY U BLACK
+			&&	o'.color = WHITE
+			&&	GREY(o') = n ≥ 1
+			&&	∀ o ∈ Obj, t ∈ T ·
+					o ∈ reachables(roots[t])
+				&&	o.color = WHITE
+				&&	o ∉ GREY
+					=>
+					∃o' ∈ GREY · o'.color ≠ BLACK && o ∈ reachables(o')
+
+		C:	o'.color = BLACK
+		
+		sp = ∃y·{
+				... // just replace o'.color
+		}
+
+	sp => H? **Unknown**. Here it's a bit convoluted:
+	
+		Now that o' is BLACK, we want to prove that ∃ new o' ∈ GREY/BLACK · o ∈ reachables(new o')
+		
+		Assume o ∈ reachables(oo) && oo is the child of o'. So there are 2 possibilities:
+		1.	oo is BLACK: recursively do the proof on oo
+		2.	oo ∈ GREY/BLACK: pick oo as the new o'
+
+		It will terminate at some point. Because ..
+
+	**TODO** unable to prove that it will terminate at some point??
+
+*	(17) only o' may be removed
+
+		H&P:	{o' ∈ GREY && o'.color ≠ BLACK && o'.color = BLACK} == false
+
+*	(19) same as proof of (4)(6)
+*	(29) change lastRead[t], independent
+
+*	(6) proved before
 *	(25)
-*	(26)
-*	(27)
-*	(31)
+
+		// r0 = load(r1, f)
+		H&P:	r0 = o
+			&&	r1 = o1
+			&&	f ∈ fields(o)
+			&&	[o1 + f] |-> o2
+			&&	{o, o1} ⊆ roots[t] = R
+			&&	phase[t] = Async
+			&&	stageC ≠ CLEAR_OR_MARKING
+			&&	(o2.color = WHITE => o2 ∈ reachables(GREY)) // assuming not BLUE
+			&&	∀ o ∈ Obj, t ∈ T ·
+					o.color = WHITE
+				&&	o ∉ GREY
+					=>
+					∃ o' ∈ GREY · o'.color ≠ BLACK && o ∈ reachables(o')
+
+		C:		roots[t] = R (-) {o} (+) {o2}	// ignore r0 = o''
+		
+		sp = ∃y·{
+				... // replace roots[t]
+		}
+
+	sp => H? **Unknown**. Here it needs to check if invariant is true for o2. It is possible that
+	
+		o' ∈ reachables(roots[t]) && o2.color = WHITE && o2 ∉ GREY
+
+	Now that
+	
+		o2 ∈ reachables(GREY)
+	
+	is it true that
+	
+		∃o' ∈ GREY/BLACK · o2 ∈ reachables(o')
+	
+	**TODO** unable to prove this unless using the invariant itself?
+
+
+*	(26)(27)
+
+		H&P:	{o.color = BLUE && ..} == false
+
+*	(31) change lastWrite[t], independent
 
 
 ##### Invariant (21) (phase[t], stageC, roots[t], BLACK, GREY)
