@@ -388,29 +388,91 @@ Note that the invariant is only meaningful when "stageC ≠ CLEAR_OR_MARKING" &&
 *	(31) change lastWrite[t], independent
 
 
-##### Invariant (21) (phase[t], stageC, roots[t], BLACK, GREY)
+##### Invariant (21) (phase[t], stageC, reachables, roots[t], BLACK, GREY)
 
-	H:	∀t ∈ T· phase[t] = Async && stageC ≠ CLEAR_OR_MARKING => reachables(U roots[t]) ⊆ BLACK U reachables(GREY)
+	H:	∀t ∈ T ·
+			phase[t] = Async && stageC ≠ CLEAR_OR_MARKING
+			=>
+			reachables(U roots[t]) ⊆ BLACK U reachables(GREY)
 
-**TODO**
+*	(3) change phaseC, independent
+*	(4)(6) only "change to Async" is meaningful
 
-*	(3) 
-*	(4)
-*	(11)
-*	(12)
-*	(13)
-*	(14)
-*	(15)
-*	(16)
+		H&P:	phase[t'] (+) 1 = phaseC = Async
+			&&	stageC ≠ CLEAR_OR_MARKING
+			&&	reachables(U roots[t]) ⊆ BLACK U reachables(GREY) // ∀ t · t ≠ t'
+		
+		C:		phase[t'] = Async
+		
+		sp = ∃y · {
+			...
+		}
+
+	sp => H? success. According to invariant (18)
+
+*	(11)(12)(13)(14) change o.f, independent
+*	(15) only add object into GREY, independent
+*	(16) only add object to BLACK, independent
 *	(17)
-*	(19)
-*	(29)
 
-*	(6)
+		H&P:	stageC = TRACING
+			&&	∀t · phaseC = phase[t] = Async
+			&&	o.color = BLACK
+			&&	GREY(o) = n ≥ 1
+			&&	reachables(U roots[t]) ⊆ BLACK U reachables(GREY)
+		
+		C:		GREY(o) = n - 1
+		
+		sp = ∃y · {
+				GREY(o) = n - 1
+			&&	stageC = TRACING
+			&&	∀t · phaseC = phase[t] = Async
+			&&	o.color = BLACK
+			&&	y = n ≥ 1
+			&&	reachables(U roots[t]) ⊆ BLACK U reachables(GREY)
+		}
+
+	sp => H? success
+
+*	(19) same as (4)(6)
+*	(29) change lastRead, independent
+
+*	(6) proved before
 *	(25)
-*	(26)
-*	(27)
-*	(31)
+
+		// r0 = load(r1, f)
+		H&P:	r0 = o
+			&&	r1 = o'
+			&&	f ∈ fields(o)
+			&&	[o' + f] |-> o''
+			&&	{o, o'} ⊆ roots[t] = R
+			&&	∀t· phase[t] = Async
+			&&	stageC ≠ CLEAR_OR_MARKING
+			&&	(o''.color = WHITE => o'' ∈ reachables(GREY)) // assuming not BLUE
+			&&	reachables(U roots[t]) ⊆ BLACK U reachables(GREY)
+
+		C:		roots[t] = R (-) {o} (+) {o''}	// ignore r0 = o''
+		
+		sp = ∃y · {
+				roots[t] = R (-) {o} (+) {o''}
+			&&	r0 = o
+			&&	r1 = o'
+			&&	f ∈ fields(o)
+			&&	[o' + f] |-> o''
+			&&	{o, o'} ⊆ roots[t] = R
+			&&	∀t· phase[t] = Async
+			&&	stageC ≠ CLEAR_OR_MARKING
+			&&	(o''.color = WHITE => o'' ∈ reachables(GREY)) // assuming not BLUE
+			&&	reachables(U roots[t'] U y) ⊆ BLACK U reachables(GREY) // t' ≠ t
+		}
+
+	sp => H? success
+
+*	(26)(27)
+
+		H&P:	{o.color = BLUE && ..} == false
+
+*	(31) change lastWrite, independent
 
 
 ##### Invariant (22) (phaseC, stageC, roots[t], reachables() GREY, BLACK, rootToMark)
