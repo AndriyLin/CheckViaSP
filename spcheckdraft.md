@@ -477,7 +477,10 @@ Note that the invariant is only meaningful when "stageC ≠ CLEAR_OR_MARKING" &&
 
 ##### Invariant (22) (phaseC, stageC, roots[t], reachables() GREY, BLACK, rootToMark)
 
-	H:	∀t ∈ T· phaseC = Async && stageC ≠ CLEAR_OR_MARKING => roots[t] ⊆ reachables(GREY U rootToMark) U BLACK
+	H:	∀t ∈ T ·
+			phaseC = Async && stageC ≠ CLEAR_OR_MARKING
+			=>
+			roots[t] ⊆ reachables(GREY U rootToMark) U BLACK
 
 *	(3)
 
@@ -507,12 +510,31 @@ Note that the invariant is only meaningful when "stageC ≠ CLEAR_OR_MARKING" &&
 *	(6) change phase[t], independent
 *	(25)
 
-		H&P:	.. && {o, o'} ⊆ roots[t] = R && phaseC = Async && stageC ≠ CLEAR_OR_MARKING && roots[t] ⊆ reachables(GREY U rootToMark) U BLACK && (phase[t] = Async && o''.color = white => o'' ∈ reachables(GREY))
-		C:		roots[t] = R (-) {o} (+) {o''}	// assignment of r0 is omitted
-		
-		sp = ∃y·{roots[t] = R (-) {o} (+) {o''} && .. && {o, o'} ⊆ y = R && phaseC = Async && stageC ≠ CLEAR_OR_MARKING && y ⊆ reachables(GREY U rootToMark) U BLACK && (phase[t] = Async && o''.color = white => o'' ∈ reachables(GREY))}
+		H&P:	r0 = o
+			&&	r1 = o'
+			&&	f ∈ fields(o)
+			&&	[o' + f] |-> o''
+			&&	{o, o'} ⊆ roots[t] = R
+			&&	stageC ≠ CLEAR_OR_MARKING
+			&&	(phase[t] = Async && o''.color = WHITE => o'' ∈ reachables(GREY)) // assuming not BLUE
+			&&	roots[t] ⊆ reachables(GREY U rootToMark) U BLACK
 
-	sp => H? **TODO** **failed**?? too much..
+		C:		roots[t] = R (-) {o} (+) {o''}	// assignment of r0 is omitted
+
+		sp = ∃y · {
+				roots[t] = R (-) {o} (+) {o''}
+			&&	r0 = o
+			&&	r1 = o'
+			&&	f ∈ fields(o)
+			&&	[o' + f] |-> o''
+			&&	{o, o'} ⊆ y = R
+			&&	∀t · phase[t] = Async
+			&&	stageC ≠ CLEAR_OR_MARKING
+			&&	(o''.color = WHITE => o'' ∈ reachables(GREY)) // assuming not BLUE
+			&&	y ⊆ reachables(GREY U rootToMark) U BLACK
+		}
+
+	sp => H? success
 
 *	(26)(27)
 
