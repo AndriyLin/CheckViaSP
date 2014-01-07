@@ -333,7 +333,7 @@ Note that the invariant is only meaningful when "stageC ≠ CLEAR_OR_MARKING" &&
 
 		It will terminate at some point. Because ..
 
-	**TODO** unable to prove that it will terminate at some point??
+	**FAILED** unable to prove that it will terminate at some point??
 
 *	(17) only o' may be removed
 
@@ -378,7 +378,7 @@ Note that the invariant is only meaningful when "stageC ≠ CLEAR_OR_MARKING" &&
 	
 		∃o' ∈ GREY/BLACK · o2 ∈ reachables(o')
 	
-	**TODO** unable to prove this unless using the invariant itself?
+	**FAILED** unable to prove this unless using the invariant itself?
 
 
 *	(26)(27)
