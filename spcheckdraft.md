@@ -323,17 +323,10 @@ Note that the invariant is only meaningful when "stageC ≠ CLEAR_OR_MARKING" &&
 				... // just replace o'.color
 		}
 
-	sp => H? **Unknown**. Here it's a bit convoluted:
+	sp => H? success. Using the invariant itself, there must be a GREY object between a BLACK and a WHITE one.
 	
-		Now that o' is BLACK, we want to prove that ∃ new o' ∈ GREY/BLACK · o ∈ reachables(new o')
-		
-		Assume o ∈ reachables(oo) && oo is the child of o'. So there are 2 possibilities:
-		1.	oo is BLACK: recursively do the proof on oo
-		2.	oo ∈ GREY/BLACK: pick oo as the new o'
+	Here the invariant itself can be used in the proof, because this is not to prove the invariant is true, but to prove that invariant won't be invalidated by some rely. (with the assumption that it's already true)
 
-		It will terminate at some point. Because ..
-
-	**FAILED** unable to prove that it will terminate at some point??
 
 *	(17) only o' may be removed
 
@@ -366,20 +359,7 @@ Note that the invariant is only meaningful when "stageC ≠ CLEAR_OR_MARKING" &&
 				... // replace roots[t]
 		}
 
-	sp => H? **Unknown**. Here it needs to check if invariant is true for o2. It is possible that
-	
-		o' ∈ reachables(roots[t]) && o2.color = WHITE && o2 ∉ GREY
-
-	Now that
-	
-		o2 ∈ reachables(GREY)
-	
-	is it true that
-	
-		∃o' ∈ GREY/BLACK · o2 ∈ reachables(o')
-	
-	**FAILED** unable to prove this unless using the invariant itself?
-
+	sp => H? success. According to the invariant itself.
 
 *	(26)(27)
 
