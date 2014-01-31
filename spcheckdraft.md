@@ -1,9 +1,23 @@
 
 **Author**: Xuankang Lin
 
-**What is this**: I am using strongest post-condition to prove that the assertions are not invalidated by the rely/guarantees. This is written in markdown so it's not fully formatted.
+**What is this**: I am using strongest post-condition to prove that the assertions are not invalidated by the rely/guarantees. This is written in markdown and can be converted to HTML for viewing. So please forgive the poor format.
 
-**Rule**: sp(H&P, C) =?> H
+**Rule**: sp(H & P, C) =?> H, here H is some assertion, P is the precondition of some rely, C is the command of that rely. If sp(H & P, C) => H, H is stable with respect to that rely.
+
+**Notations**: Since this is a draft, I only use the notations that are easy to enter. && for logical and, || for logical or.
+
+**Structure**:
+
+*	First list all the relies for mutator thread and for collector thread.
+*	Then prove all the invariants are stable.
+*	Then prove the assertions of each functions mentioned in the .tex file.
+
+**Notes**:
+
+When I started proving, I commented out all the text in the .tex file and used that number order for each invariant/rely/guarantee. However, it seems that the number order is a little different with text on..
+
+Only those assertions written in the .tex file are proved.
 
 -----
 
@@ -202,10 +216,19 @@ These three can only modified in collector thread, therefore there is indeed no 
 
 *	(11)
 
-		H&P:	phase[t] = Async && stageC = RESTING && {o, v} ⊆ reachables(roots[t]) && reachables(roots[t]) ⊆ BLACK U reachables(GREY)
+		H&P:	phase[t] = Async
+			&&	stageC = RESTING
+			&&	{o, v} ⊆ reachables(roots[t])
+			&&	reachables(roots[t]) ⊆ BLACK U reachables(GREY)
 		C:		o.f |-> v
 
-		sp = ∃y·{o.f |-> v && phase[t] = Async && stageC = RESTING && {o, v} ⊆ reachables(roots[t]) && reachables(roots[t]) ⊆ BLACK U reachables(GREY)}
+		sp = ∃y·{
+			o.f |-> v
+		&&	phase[t] = Async
+		&&	stageC = RESTING
+		&&	{o, v} ⊆ reachables(roots[t])
+		&&	reachables(roots[t]) ⊆ BLACK U reachables(GREY)
+		}
 
 	sp => H? success
 
@@ -219,10 +242,23 @@ These three can only modified in collector thread, therefore there is indeed no 
 
 *	(14)
 
-		H&P:	phase[t] = Async && stageC ∈ {Tracing, Sweeping} && {v, o} ⊆ reachables(roots[t]) && {v, o'} ⊆ GREY U BLACK && o.f |-> o' && reachables(roots[t]) ⊆ BLACK U reachables(GREY)
+		H&P:	phase[t] = Async
+			&&	stageC ∈ {Tracing, Sweeping}
+			&&	{v, o} ⊆ reachables(roots[t])
+			&&	{v, o'} ⊆ GREY U BLACK
+			&&	o.f |-> o'
+			&&	reachables(roots[t]) ⊆ BLACK U reachables(GREY)
 		C:		o.f |-> v
 
-		sp = ∃y·{o.f |-> v && phase[t] = Async && stageC ∈ {Tracing, Sweeping} && {v, o} ⊆ reachables(roots[t]) && {v, o'} ⊆ GREY U BLACK && y |-> o' && reachables(roots[t]) ⊆ BLACK U reachables(GREY)}
+		sp = ∃y·{
+			o.f |-> v
+		&&	phase[t] = Async
+		&&	stageC ∈ {Tracing, Sweeping}
+		&&	{v, o} ⊆ reachables(roots[t])
+		&&	{v, o'} ⊆ GREY U BLACK
+		&&	y |-> o'
+		&&	reachables(roots[t]) ⊆ BLACK U reachables(GREY)
+		}
 
 	sp => H? success
 
@@ -230,10 +266,22 @@ These three can only modified in collector thread, therefore there is indeed no 
 *	(16) only set o.color to BLACK, those already in BLACK are not affected
 *	(17)
 
-		H&P:	stageC = Tracing && ∀t· phase[t] = phaseC = Async && o.color = BLACK && GREY(o) = n ≥ 1 && o ∈ reachables(roots[t]) && reachables(roots[t]) ⊆ BLACK U reachables(GREY)
+		H&P:	stageC = Tracing
+			&&	∀t· phase[t] = phaseC = Async
+			&&	o.color = BLACK
+			&&	GREY(o) = n ≥ 1
+			&&	o ∈ reachables(roots[t])
+			&&	reachables(roots[t]) ⊆ BLACK U reachables(GREY)
 		C:		GREY(o) = n - 1
 
-		sp = ∃y·{GREY(o) = n-1 && stageC = Tracing && ∀t· phase[t] = phaseC = Async && o.color = BLACK && y = n ≥ 1 && o ∈ reachables(roots[t]) && reachables(roots[t]) ⊆ BLACK U reachables(GREY)}
+		sp = ∃y·{
+			GREY(o) = n-1
+		&&	stageC = Tracing
+		&&	∀t· phase[t] = phaseC = Async
+		&&	o.color = BLACK
+		&&	y = n ≥ 1
+		&&	o ∈ reachables(roots[t])
+		&&	reachables(roots[t]) ⊆ BLACK U reachables(GREY)}
 
 	sp => H? success
 
@@ -254,10 +302,30 @@ These three can only modified in collector thread, therefore there is indeed no 
 
 *	(25)
 
-		H&P:	phase[t] = Async && stageC ≠ CLEAR_OR_MARKING && r0 = o && r1 = o' && f ∈ fields(o) && [o' + f] |-> o'' && {o, o'} ⊆ roots[t] = R && (o''.color = WHITE => o'' ∈ reachables(GREY) && reachables(roots[t]) ⊆ BLACK U reachables(GREY))
+		H&P:	phase[t] = Async
+			&&	stageC ≠ CLEAR_OR_MARKING
+			&&	r0 = o
+			&&	r1 = o'
+			&&	f ∈ fields(o)
+			&&	[o' + f] |-> o''
+			&&	{o, o'} ⊆ roots[t] = R
+			&&	(o''.color = WHITE => o'' ∈ reachables(GREY)
+			&&	reachables(roots[t]) ⊆ BLACK U reachables(GREY))
+
 		C:		roots[t] = R (-) {o} (+) {o''}	// assignment to r0 is omitted here
 		
-		sp = ∃y·{roots[t] = R (-) {o} (+) {o''} && phase[t] = Async && stageC ≠ CLEAR_OR_MARKING && r0 = o && r1 = o' && f ∈ fields(o) && [o' + f] |-> o'' && {o, o'} ⊆ y = R && (o''.color = WHITE => o'' ∈ reachables(GREY) && reachables(y) ⊆ BLACK U reachables(GREY))}
+		sp = ∃y·{
+			roots[t] = R (-) {o} (+) {o''}
+		&&	phase[t] = Async
+		&&	stageC ≠ CLEAR_OR_MARKING
+		&&	r0 = o
+		&&	r1 = o'
+		&&	f ∈ fields(o)
+		&&	[o' + f] |-> o''
+		&&	{o, o'} ⊆ y = R
+		&&	(o''.color = WHITE => o'' ∈ reachables(GREY)
+		&&	reachables(y) ⊆ BLACK U reachables(GREY))
+		}
 
 	sp => H? success when there is an extra constraint saying o''.color can only be either WHITE or BLACK, never BLUE. **TODO** remove this when the extra constraint is added
 
@@ -477,10 +545,22 @@ Note that the invariant is only meaningful when "stageC ≠ CLEAR_OR_MARKING" &&
 *	(16) only set o.color to BLACK, those already in BLACK are not affected
 *	(17)
 
-		H&P:	phaseC = Async && stageC = Tracing && o ∈ roots[t] && o.color = BLACK && GREY(o) = n ≥ 1 && roots[t] ⊆ reachables(GREY U rootToMark) U BLACK
+		H&P:	phaseC = Async
+			&&	stageC = Tracing
+			&&	o ∈ roots[t]
+			&&	o.color = BLACK
+			&&	GREY(o) = n ≥ 1
+			&&	roots[t] ⊆ reachables(GREY U rootToMark) U BLACK
 		C:		GREY(o) = n - 1
 		
-		sp = ∃y·{GREY(o) = n-1 && phaseC = Async && stageC = Tracing && o ∈ roots[t] && o.color = BLACK && y = n ≥ 1 && roots[t] ⊆ reachables(GREY U rootToMark) U BLACK}
+		sp = ∃y·{
+			GREY(o) = n-1
+		&&	phaseC = Async
+		&&	stageC = Tracing
+		&&	o ∈ roots[t]
+		&&	o.color = BLACK
+		&&	y = n ≥ 1
+		&&	roots[t] ⊆ reachables(GREY U rootToMark) U BLACK}
 
 	sp => H? success
 
@@ -555,10 +635,18 @@ Note that the invariant is only meaningful when "stageC ≠ CLEAR_OR_MARKING" &&
 *	(4) change phase[t], independent
 *	(11)..(14)
 
-		H&P:	stageC = RESTING && {o, v} ⊆ reachables(roots[t]) && (∀ o ∈ Obj· (o ∈ U_t∈T reachables(roots[t]) => o.color = BLACK))
+		H&P:	stageC = RESTING
+			&&	{o, v} ⊆ reachables(roots[t])
+			&&	(∀ o ∈ Obj· (o ∈ U_t∈T reachables(roots[t]) => o.color = BLACK))
 		C:		o.f |-> v
 
-		sp = ∃y·{o.f |-> v && stageC = RESTING && {o, v} ⊆ reachables(roots[t]) && v.color = BLACK && ..}
+		sp = ∃y·{
+			o.f |-> v
+		&&	stageC = RESTING
+		&&	{o, v} ⊆ reachables(roots[t])
+		&&	v.color = BLACK
+		&&	..
+		}
 
 	sp => H? success
 
@@ -571,10 +659,27 @@ Note that the invariant is only meaningful when "stageC ≠ CLEAR_OR_MARKING" &&
 *	(6) change phase[t], independent
 *	(25)
 
-		H&P:	r0 = o && r1 = o' && f ∈ fields(o) && [o' + f] |-> o'' && {o, o'} ⊆ roots[t] = R && (phase[t] = Async && o''.color = WHITE => o'' ∈ reachables(GREY)) && stageC = RESTING && ∀ob ∈ Obj· (ob ∈ U_t∈T reachables(roots[t]) => ob.color = BLACK)
+		H&P:	r0 = o
+			&&	r1 = o'
+			&&	f ∈ fields(o)
+			&&	[o' + f] |-> o''
+			&&	{o, o'} ⊆ roots[t] = R
+			&&	(phase[t] = Async && o''.color = WHITE => o'' ∈ reachables(GREY))
+			&&	stageC = RESTING
+			&&	∀ob ∈ Obj· (ob ∈ U_t∈T reachables(roots[t]) => ob.color = BLACK)
+
 		C:		roots[t] = R (-) {o} (+) {o''}	// assignment of r0 is omitted
 		
-		sp = ∃y·{roots[t] = R (-) {o} (+) {o''} && r0 = o && r1 = o' && f ∈ fields(o) && [o' + f] |-> o'' && {o, o'} ⊆ y = R && (phase[t] = Async && o''.color = WHITE => o'' ∈ reachables(GREY)) && stageC = RESTING && ∀ob ∈ Obj· (ob ∈ U_t∈T reachables(y) => ob.color = BLACK)}
+		sp = ∃y·{
+			roots[t] = R (-) {o} (+) {o''}
+		&&	r0 = o
+		&&	r1 = o'
+		&&	f ∈ fields(o)
+		&&	[o' + f] |-> o''
+		&&	{o, o'} ⊆ y = R
+		&&	(phase[t] = Async && o''.color = WHITE => o'' ∈ reachables(GREY))
+		&&	stageC = RESTING
+		&&	∀ob ∈ Obj· (ob ∈ U_t∈T reachables(y) => ob.color = BLACK)}
 
 	sp => H? success (key: o'' previously ∈ reachables(roots[t])? yes)
 
@@ -584,10 +689,22 @@ Note that the invariant is only meaningful when "stageC ≠ CLEAR_OR_MARKING" &&
 
 *	(27)
 
-		H&P:	phase[t] = Async && stageC = RESTING && freelist |-> FREELIST && o ∈ FREELIST && o.color = BLUE && ∀ o ∈ Obj · (o ∈ U_t∈T reachables(roots[t]) => o.color = BLACK)
+		H&P:	phase[t] = Async
+			&&	stageC = RESTING
+			&&	freelist |-> FREELIST
+			&&	o ∈ FREELIST
+			&&	o.color = BLUE
+			&&	∀ o ∈ Obj · (o ∈ U_t∈T reachables(roots[t]) => o.color = BLACK)
 		C:		o.color = BLACK	// change of freelist is omitted
 
-		sp = ∃y·{o.color = BLACK && phase[t] = Async && stageC = RESTING && freelist |-> FREELIST && o ∈ FREELIST && y = BLUE && ∀ o ∈ Obj · (ob ∈ U_t∈T reachables(roots[t]) => ob.color = BLACK)}
+		sp = ∃y·{
+			o.color = BLACK
+		&&	phase[t] = Async
+		&&	stageC = RESTING
+		&&	freelist |-> FREELIST
+		&&	o ∈ FREELIST
+		&&	y = BLUE
+		&&	∀ o ∈ Obj · (ob ∈ U_t∈T reachables(roots[t]) => ob.color = BLACK)}
 
 	sp => H? success
 
@@ -607,10 +724,17 @@ Note that the invariant is only meaningful when "stageC ≠ CLEAR_OR_MARKING" &&
 *	(19) change phase[t], independent
 *	(29)
 
-		H&P:	lastRead[t] = v && lastWrite[t] = v' && v + n ≤ v'
+		H&P:	lastRead[t] = v
+			&&	lastWrite[t] = v'
+			&&	v + n ≤ v'
 		C:		lastRead[t] = v + n
 		
-		sp = ∃y·{lastRead[t] = v + n && y = v && lastWrite[t] = v' && v + n ≤ v'}
+		sp = ∃y·{
+			lastRead[t] = v + n
+		&&	y = v
+		&&	lastWrite[t] = v'
+		&&	v + n ≤ v'
+		}
 
 	sp => H? success
 
@@ -620,10 +744,17 @@ Note that the invariant is only meaningful when "stageC ≠ CLEAR_OR_MARKING" &&
 *	(26)(27) change freelist & o.color, independent
 *	(31)
 
-		H&P:	lastWrite[t] = v && v + n ≤ BUCKET_SIZE && lastRead[t] ≤ lastWrite[t]
+		H&P:	lastWrite[t] = v
+			&&	v + n ≤ BUCKET_SIZE
+			&&	lastRead[t] ≤ lastWrite[t]
 		C:		lastWrite[t] = v + n
 		
-		sp = ∃y·{lastWrite[t] = v + n && y = v && v + n ≤ BUCKET_SIZE && lastRead[t] ≤ y}
+		sp = ∃y·{
+			lastWrite[t] = v + n
+		&&	y = v
+		&&	v + n ≤ BUCKET_SIZE
+		&&	lastRead[t] ≤ y
+		}
 
 	sp => H? success
 
@@ -632,20 +763,25 @@ Note that the invariant is only meaningful when "stageC ≠ CLEAR_OR_MARKING" &&
 
 ### *t*: cooperate()
 
-// ### is followed by a function name, the following is to prove the assertions in this function. t means mutator thread, C means collector thread.
+"###" is followed by a function name, the following is to prove the assertions in this function. t means mutator thread, C means collector thread.
+
+While invariants check against all relies, functions on mutator thread only check agains the relies of mutator thread. Similar for collector thread.
+
+"after 1" is to locate the assertion. 1 is the line number written in .tex file.
+
+In parenthesis are the variables used in the assertion. (therefore only need to check the rely/guarantees that change those variables)
 
 
 ##### after 1 (tmp, phaseC, phase[t])
 
-// ##### is followed by an assertion's location. In the parenthesis are the variables used in the assertion. (thus only need to check the rely/guarantees that change those variables)
-
 *	(3)
 
-		H&P:	{phaseC = phase[t] = tmp = X}
+		H&P:	phaseC = phase[t] = tmp = X
 		C:		phaseC = X + 1
 		
 		sp = {phaseC = phase[t] + 1 = tmp + 1}
-		sp => H, success
+	
+	sp => H? success
 
 *	(4) change phase[t'] (another thread), independent
 *	(11)(12)(13)(14) change o.f, independent
@@ -660,7 +796,7 @@ Note that the invariant is only meaningful when "stageC ≠ CLEAR_OR_MARKING" &&
 
 *	(3)
 	
-		H&P:	{phase[t] (+) 1 = phaseC && phase[t] = phaseC} => false
+		H&P:	{phase[t] (+) 1 = phaseC && phase[t] = phaseC} == false
 
 *	(4)...... all independent, the same as above
 
@@ -674,13 +810,13 @@ all other assertions in cooperate() is Phase_inv[t], thus considered to be true 
 
 *	(6)
 
-		H&P:	{(∃t· phase[t] (+) 1 = phaseC) && (∀t·phase[t] = phaseC} => false
+		H&P:	{(∃t· phase[t] (+) 1 = phaseC) && (∀t·phase[t] = phaseC} == false
 
 *	(11)(12)(13)(14) change o.f, independent
 *	(15) change GREY, independent
 *	(19)
 
-		H&P:	{(∃t·phaseC = Async && phase[t] = Sync2) && (∀t·phase[t] = phaseC)} => false
+		H&P:	{(∃t·phaseC = Async && phase[t] = Sync2) && (∀t·phase[t] = phaseC)} == false
 
 *	(25) change roots, independent
 *	(26)(27) change FREELIST, independent
@@ -712,13 +848,13 @@ exactly the same as "after 2"
 
 *	(6)
 
-		H&P:	{phase[t] (+) 1 = phaseC && phase[t] = phaseC} => false
+		H&P:	{phase[t] (+) 1 = phaseC && phase[t] = phaseC} == false
 
 *	(11)(12)(13)(14) change o.f, independent
 *	(15) change GREY, independent
 *	(19)
 
-		H&P:	{(phaseC = Async && phase[t] = Sync2) && (phase[t] = phaseC)} => false
+		H&P:	{(phaseC = Async && phase[t] = Sync2) && (phase[t] = phaseC)} == false
 
 *	(25) change roots, independent
 *	(26)(27) change FREELIST, independent
@@ -727,7 +863,7 @@ exactly the same as "after 2"
 
 ##### after 4 for loop / POST (∀t·phase[t], phaseC)
 
-	similar to "PRE", except that the value of phase[t] and phase is different. The proof is the same as "PRE".
+similar to "PRE", except that the value of phase[t] and phase is different. The proof is the same as "PRE".
 
 -----
 
@@ -739,21 +875,45 @@ exactly the same as "after 2"
 *	(4) change phase[t'] of another mutator thread, independent
 *	(11)
 	
-		H&P:	{x.f |-> _ && {x, v} ⊆ roots[t] && phase[t] = Async && stageC ∈ {Resting, Clear-or-Marking} && {x, v'} ⊆ reachables(roots[t])}
+		H&P:	x.f |-> _
+			&&	{x, v} ⊆ roots[t]
+			&&	phase[t] = Async
+			&&	stageC ∈ {Resting, Clear-or-Marking}
+			&&	{x, v'} ⊆ reachables(roots[t])
 		C:		x.f |-> v'
 			
-		sp = {x.f |-> v' && v0 |-> _ && {x, v} ⊆ roots[t] && phase[t] = Async && stageC ∈ {Resting, Clear-or-Marking} && {x, v'} ⊆ reachables(roots[t])}
+		sp = {
+			x.f |-> v'
+		&&	v0 |-> _
+		&&	{x, v} ⊆ roots[t]
+		&&	phase[t] = Async
+		&&	stageC ∈ {Resting, Clear-or-Marking}
+		&&	{x, v'} ⊆ reachables(roots[t])
+		}
 		// v0 is the original value
-		sp => H, success
+
+	sp => H? success
 	
 *	(12)
 	
-		H&P:	{x.f |-> _ && {x, v} ⊆ roots[t] && phase[t] = Sync1 && {x, v'} ⊆ reachables(roots[t]) && v' ∈ GREY}
+		H&P:	x.f |-> _
+			&&	{x, v} ⊆ roots[t]
+			&&	phase[t] = Sync1
+			&&	{x, v'} ⊆ reachables(roots[t])
+			&&	v' ∈ GREY
 		C:		x.f |-> v'
 			
-		sp = {x.f |-> v' && v0 |-> _ && {x, v} ⊆ roots[t] && phase[t] = Sync1 && {x, v'} ⊆ reachables(roots[t]) && v' ∈ GREY}
+		sp = {
+			x.f |-> v'
+		&&	v0 |-> _
+		&&	{x, v} ⊆ roots[t]
+		&&	phase[t] = Sync1
+		&&	{x, v'} ⊆ reachables(roots[t])
+		&&	v' ∈ GREY
+		}
 		// v0 is the original value
-		sp => H, success
+	
+	sp => H? success
 	
 *	(13)(14)
 	
@@ -785,21 +945,39 @@ exactly the same as "after 2"
 
 *	(13)
 
-		H&P:	phase[t] = Sync2 && {x, v'} ⊆ reachables(roots[t]) && {v'} ⊆ GREY U BLACK && (x.f |-> old && old ∈ GREY U BLACK || ∃w· x.f |-> w && w ∈ GREY U BLACK)
+		H&P:	phase[t] = Sync2
+			&&	{x, v'} ⊆ reachables(roots[t])
+			&&	{v'} ⊆ GREY U BLACK
+			&&	(x.f |-> old && old ∈ GREY U BLACK || ∃w· x.f |-> w && w ∈ GREY U BLACK)
 		C:		x.f |-> v'
 
-		sp = ∃y·{x.f |-> v' && phase[t] = Sync2 && {x, v'} ⊆ reachables(roots[t]) && {v'} ⊆ GREY U BLACK && (y |-> old && old ∈ GREY U BLACK || ∃w· y |-> w && w ∈ GREY U BLACK)}
+		sp = ∃y·{
+			x.f |-> v'
+		&&	phase[t] = Sync2
+		&&	{x, v'} ⊆ reachables(roots[t])
+		&&	{v'} ⊆ GREY U BLACK
+		&&	(y |-> old && old ∈ GREY U BLACK || ∃w· y |-> w && w ∈ GREY U BLACK)
+		}
 
-		sp => H? success
+	sp => H? success
 
 *	(14)
 
-		H&P:	stageC = Tracing && {v', x} ⊆ reachables(roots[t]) && {v'} ⊆ GREY U BLACK && (x.f |-> old && old ∈ GREY U BLACK || ∃w· x.f |-> w && w ∈ GREY U BLACK)
+		H&P:	stageC = Tracing
+			&&	{v', x} ⊆ reachables(roots[t])
+			&&	{v'} ⊆ GREY U BLACK
+			&&	(x.f |-> old && old ∈ GREY U BLACK || ∃w· x.f |-> w && w ∈ GREY U BLACK)
 		C:		x.f |-> v'
 
-		sp = ∃y·{x.f |-> v' && stageC = Tracing && {v', x} ⊆ reachables(roots[t]) && {v', old} ⊆ GREY U BLACK && (y |-> old && old ∈ GREY U BLACK || ∃w· y |-> w && w ∈ GREY U BLACK)}
+		sp = ∃y·{
+			x.f |-> v'
+		&&	stageC = Tracing
+		&&	{v', x} ⊆ reachables(roots[t])
+		&&	{v', old} ⊆ GREY U BLACK
+		&&	(y |-> old && old ∈ GREY U BLACK || ∃w· y |-> w && w ∈ GREY U BLACK)
+		}
 
-		sp => H? success
+	sp => H? success
 
 *	(15) only increase set GREY, those already in GREY are not affected
 *	(16) only set an obj to BLACK, those already in GREY U BLACK are not affected
@@ -807,19 +985,41 @@ exactly the same as "after 2"
 
 		// the "x.f |-> old" branch is independent with respect to GREY(o), thus only consider the other branch
 
-		H&P:	stageC = Tracing && ∀t·phaseC = phase[t] = Async && w.color = BLACK && GREY(w) = n ≥ 1 && (x.f |-> old || ∃w· x.f |-> w && w ∈ GREY U BLACK)
+		H&P:	stageC = Tracing
+			&&	∀t·phaseC = phase[t] = Async
+			&&	w.color = BLACK
+			&&	GREY(w) = n ≥ 1
+			&& (x.f |-> old || ∃w· x.f |-> w && w ∈ GREY U BLACK)
 		C:		GREY(w) = n-1
 		
-		sp = ∃y·{GREY(w) = n-1 && stageC = Tracing && ∀t·phaseC = phase[t] = Async && w.color = BLACK && y = n ≥ 1 && (x.f |-> old || ∃w· x.f |-> w && w ∈ GREY U BLACK)}
-		sp => H? success
+		sp = ∃y·{
+			GREY(w) = n-1
+		&&	stageC = Tracing
+		&&	∀t·phaseC = phase[t] = Async
+		&&	w.color = BLACK
+		&&	y = n ≥ 1
+		&&	(x.f |-> old || ∃w· x.f |-> w && w ∈ GREY U BLACK)
+		}
+
+	sp => H? success
 
 *	(19)
 
-		H&P:	phase[t] = Sync2 && phaseC = Async && roots[t] ⊆ GREY && (x.f |-> old || (∃w·x.f |-> w && w ∈ GREY U BLACK))
+		H&P:	phase[t] = Sync2
+			&&	phaseC = Async
+			&&	roots[t] ⊆ GREY
+			&&	(x.f |-> old || (∃w·x.f |-> w && w ∈ GREY U BLACK))
 		C:		phase[t] = Async
 		
-		sp = ∃y·{phase[t] = Async && y = Sync2 && phaseC = Async && roots[t] ⊆ GREY && (x.f |-> old || (∃w·x.f |-> w && w ∈ GREY U BLACK))}
-		sp => H? success
+		sp = ∃y·{
+			phase[t] = Async
+		&&	y = Sync2
+		&&	phaseC = Async
+		&&	roots[t] ⊆ GREY
+		&&	(x.f |-> old || (∃w·x.f |-> w && w ∈ GREY U BLACK))
+		}
+
+	sp => H? success
 
 *	(29) change lastRead[t], independent
 
@@ -836,38 +1036,67 @@ exactly the same as "after 2"
 *	(4) change phase[t] of another mutator thread, independent
 *	(11)
 
-		H&P:	(phase[t] = Sync2 || stageC = Tracing || phase[t] = Sync1) && (phase[t] = Async && stageC ∈ {RESTING, CLEAR_OR_MARKING}) = FALSE
+		H&P:	(phase[t] = Sync2 || stageC = Tracing || phase[t] = Sync1) && (phase[t] = Async && stageC ∈ {RESTING, CLEAR_OR_MARKING}) == FALSE
 		
 *	(12)
 
-		H&P:	phase[t] = Sync1 && {x, v'} ⊆ reachables(roots[t]) && v' ∈ GREY && x.f |-> _ && old ∈ GREY U BLACK
+		H&P:	phase[t] = Sync1
+			&&	{x, v'} ⊆ reachables(roots[t])
+			&&	v' ∈ GREY
+			&&	x.f |-> _
+			&&	old ∈ GREY U BLACK
 		C:		x.f |-> v'
 		
-		sp = ∃y·{x.f |-> v' && phase[t] = Sync1 && {x, v'} ⊆ reachables(roots[t]) && v' ∈ GREY && y |-> _ && old ∈ GREY U BLACK}
+		sp = ∃y·{
+			x.f |-> v'
+		&&	phase[t] = Sync1
+		&&	{x, v'} ⊆ reachables(roots[t])
+		&&	v' ∈ GREY
+		&&	y |-> _
+		&&	old ∈ GREY U BLACK
+		}
 
-		sp => H? success
+	sp => H? success
 		
 *	(13)
 
 		// the same as (13) in "after 3"
 
-		H&P:	phase[t] = Sync2 && {x, v'} ⊆ reachables(roots[t]) && {v', old} ⊆ GREY U BLACK && (x.f |-> old || ∃w· x.f |-> w && w ∈ GREY U BLACK)
+		H&P:	phase[t] = Sync2
+			&&	{x, v'} ⊆ reachables(roots[t])
+			&&	{v', old} ⊆ GREY U BLACK
+			&&	(x.f |-> old || ∃w· x.f |-> w && w ∈ GREY U BLACK)
 		C:		x.f |-> v'
 
-		sp = ∃y·{x.f |-> v' && phase[t] = Sync2 && {x, v'} ⊆ reachables(roots[t]) && {v', old} ⊆ GREY U BLACK && (y |-> old || ∃w· y |-> w && w ∈ GREY U BLACK)}
+		sp = ∃y·{
+			x.f |-> v'
+		&&	phase[t] = Sync2
+		&&	{x, v'} ⊆ reachables(roots[t])
+		&&	{v', old} ⊆ GREY U BLACK
+		&&	(y |-> old || ∃w· y |-> w && w ∈ GREY U BLACK)
+		}
 
-		sp => H? success
+	sp => H? success
 
 *	(14)
 
 		// the same as (14) in "after 3"
 		
-		H&P:	stageC = Tracing && {v', x} ⊆ reachables(roots[t]) && {v', old} ⊆ GREY U BLACK && (x.f |-> old || ∃w· x.f |-> w && w ∈ GREY U BLACK)
+		H&P:	stageC = Tracing
+			&&	{v', x} ⊆ reachables(roots[t])
+			&&	{v', old} ⊆ GREY U BLACK
+			&&	(x.f |-> old || ∃w· x.f |-> w && w ∈ GREY U BLACK)
 		C:		x.f |-> v'
 
-		sp = ∃y·{x.f |-> v' && stageC = Tracing && {v', x} ⊆ reachables(roots[t]) && {v', old} ⊆ GREY U BLACK && (y |-> old || ∃w· y |-> w && w ∈ GREY U BLACK)}
+		sp = ∃y·{
+			x.f |-> v'
+		&&	stageC = Tracing
+		&&	{v', x} ⊆ reachables(roots[t])
+		&&	{v', old} ⊆ GREY U BLACK
+		&&	(y |-> old || ∃w· y |-> w && w ∈ GREY U BLACK)
+		}
 
-		sp => H? success
+	sp => H? success
 		
 *	(15) only add object into GREY, those already in GREY are not affected
 *	(16) only set obj to BLACK, those already in BLACK are not affected
@@ -875,26 +1104,66 @@ exactly the same as "after 2"
 
 		// both "old" and "w" can be the object o in (17), thus consider them twice
 
-		H&P_1:	stageC = Tracing && ∀t·phase[t] = phaseC = Async && old.color = BLACK && GREY(old) = n ≥ 1 && old ∈ GREY U BLACK && (x.f |-> old || (∃w· x.f |->w && w ∈ GREY U BLACK))
+		H&P_1:	stageC = Tracing
+			&&	∀t·phase[t] = phaseC = Async
+			&&	old.color = BLACK
+			&&	GREY(old) = n ≥ 1
+			&&	old ∈ GREY U BLACK
+			&&	(x.f |-> old || (∃w· x.f |->w && w ∈ GREY U BLACK))
 		C:		GREY(old) = n - 1
 		
-		sp_1 = ∃y·{GREY(old) = n - 1 && stageC = Tracing && ∀t·phase[t] = phaseC = Async && old.color = BLACK && y = n ≥ 1 && old ∈ GREY U BLACK && (...)}
-		sp_1 => H? success
+		sp_1 = ∃y·{
+			GREY(old) = n - 1
+		&&	stageC = Tracing
+		&&	∀t·phase[t] = phaseC = Async
+		&&	old.color = BLACK
+		&&	y = n ≥ 1
+		&&	old ∈ GREY U BLACK
+		&&	(...)
+		}
+
+	sp_1 => H? success
 
 
-		H&P_2:	stageC = Tracing && ∀t·phase[t] = phaseC = Async && w.color = BLACK && GREY(w) = n ≥ 1 && old ∈ GREY U BLACK && (∃w· x.f |->w && w ∈ GREY U BLACK)
+		H&P_2:	stageC = Tracing
+			&&	∀t·phase[t] = phaseC = Async
+			&&	w.color = BLACK
+			&&	GREY(w) = n ≥ 1
+			&&	old ∈ GREY U BLACK
+			&&	(∃w· x.f |->w && w ∈ GREY U BLACK)
 		C:		GREY(w) = n - 1
 		
-		sp_2 = ∃y·{GREY(w) = n-1 && stageC = Tracing && ∀t·phase[t] = phaseC = Async && w.color = BLACK & y = n ≥ 1 && old ∈ GREY U BLACK && (...)}
-		sp_2 => H? success
+		sp_2 = ∃y·{
+			GREY(w) = n-1
+		&&	stageC = Tracing
+		&&	∀t·phase[t] = phaseC = Async
+		&&	w.color = BLACK
+		&&	y = n ≥ 1
+		&&	old ∈ GREY U BLACK
+		&&	(...)
+		}
+
+	sp_2 => H? success
 
 *	(19)
 
-		H&P:	phase[t] = Sync2 && phaseC = Async && roots[t] ⊆ GREY && old ∈ GREY U BLACK && (x.f |-> old || ∃w· x.f |-> w && w ∈ GREY U BLACK)
+		H&P:	phase[t] = Sync2
+			&&	phaseC = Async
+			&&	roots[t] ⊆ GREY
+			&&	old ∈ GREY U BLACK
+			&&	(x.f |-> old || ∃w· x.f |-> w && w ∈ GREY U BLACK)
 		C:		phase[t] = Async
 		
-		sp = ∃y·{phase[t] = Async && y = Sync2 && phaseC = Async && roots[t] ⊆ GREY && old ∈ GREY U BLACK && (x.f |-> old || ∃w· x.f |-> w && w ∈ GREY U BLACK)}
-		sp => H? success
+		sp = ∃y·{
+			phase[t] = Async
+		&&	y = Sync2
+		&&	phaseC = Async
+		&&	roots[t] ⊆ GREY
+		&&	old ∈ GREY U BLACK
+		&& (x.f |-> old || ∃w· x.f |-> w && w ∈ GREY U BLACK)
+		}
+
+	sp => H? success
 
 *	(29) change lastRead[t], independent
 
@@ -911,72 +1180,157 @@ exactly the same as "after 2"
 *	(4) change phase[t'] of another mutator thread, independent
 *	(11)
 
-		H&P:	phase[t] = Async && stageC ∈ {RESTING, CLEAR_OR_MARKING} && (phase[t] = Sync2 || stageC = Tracing || phase[t] = Sync1) == false
+		H&P:	phase[t] = Async
+			&&	stageC ∈ {RESTING, CLEAR_OR_MARKING}
+			&&	(phase[t] = Sync2 || stageC = Tracing || phase[t] = Sync1) == false
 		
 *	(12)
 
-		H&P:	phase[t] = Sync1 && {old, v} ⊆ GREY U BLACK && {x, v'} ⊆ reachables(roots[t]) && v' ∈ GREY && x.f |-> _
+		H&P:	phase[t] = Sync1
+			&&	{old, v} ⊆ GREY U BLACK
+			&&	{x, v'} ⊆ reachables(roots[t])
+			&&	v' ∈ GREY
+			&&	x.f |-> _
 		C:		x.f |-> v'
 		
-		sp = ∃y·{x.f |-> v' && phase[t] = Sync1 && {old, v} ⊆ GREY U BLACK && {x, v'} ⊆ reachables(roots[t]) && v' ∈ GREY && y |-> _}
+		sp = ∃y·{
+			x.f |-> v'
+		&&	phase[t] = Sync1
+		&&	{old, v} ⊆ GREY U BLACK
+		&&	{x, v'} ⊆ reachables(roots[t])
+		&&	v' ∈ GREY
+		&&	y |-> _
+		}
 		
-		sp => H? success
+	sp => H? success
 
 *	(13)
 
-		H&P:	phase[t] = Sync2 && {x, v'} ⊆ reachables(roots[t]) && {v', old} ⊆ GREY U BLACK && (x.f |-> old || ∃w· x.f |-> w && w ∈ GREY U BLACK) && {old, v} ⊆ GREY U BLACK
+		H&P:	phase[t] = Sync2
+			&&	{x, v'} ⊆ reachables(roots[t])
+			&&	{v', old} ⊆ GREY U BLACK
+			&&	(x.f |-> old || ∃w· x.f |-> w && w ∈ GREY U BLACK)
+			&&	{old, v} ⊆ GREY U BLACK
 		C:		x.f |-> v'
 		
-		sp = ∃y·{x.f |-> v' && phase[t] = Sync2 && {x, v'} ⊆ reachables(roots[t]) && {v', old} ⊆ GREY U BLACK && (y |-> old || ∃w· y |-> w && w ∈ GREY U BLACK) && {old, v} ⊆ GREY U BLACK}
+		sp = ∃y·{
+			x.f |-> v'
+		&&	phase[t] = Sync2
+		&&	{x, v'} ⊆ reachables(roots[t])
+		&&	{v', old} ⊆ GREY U BLACK
+		&&	(y |-> old || ∃w· y |-> w && w ∈ GREY U BLACK)
+		&&	{old, v} ⊆ GREY U BLACK
+		}
 		
-		sp => H? success
+	sp => H? success
 
 *	(14)
 
-		H&P:	stageC = Tracing && {v', x} ⊆ reachables(roots[t]) && {v', old} ⊆ GREY U BLACK && (x.f |-> old || ∃w· x.f |-> w && w ∈ GREY U BLACK) && {old, v} ⊆ GREY U BLACK
+		H&P:	stageC = Tracing
+			&&	{v', x} ⊆ reachables(roots[t])
+			&&	{v', old} ⊆ GREY U BLACK
+			&&	(x.f |-> old || ∃w· x.f |-> w && w ∈ GREY U BLACK)
+			&&	{old, v} ⊆ GREY U BLACK
 		C:		x.f |-> v'
 		
-		sp = ∃y·{x.f |-> v' && stageC = Tracing && {v', x} ⊆ reachables(roots[t]) && {v', old} ⊆ GREY U BLACK && (y |-> old || ∃w· y |-> w && w ∈ GREY U BLACK) && {old, v} ⊆ GREY U BLACK}
+		sp = ∃y·{
+			x.f |-> v'
+		&&	stageC = Tracing
+		&&	{v', x} ⊆ reachables(roots[t])
+		&&	{v', old} ⊆ GREY U BLACK
+		&&	(y |-> old || ∃w· y |-> w && w ∈ GREY U BLACK)
+		&&	{old, v} ⊆ GREY U BLACK
+		}
 		
-		sp => H? success
+	sp => H? success
 
 *	(15) only add object into GREY, those already in GREY are not affected
 *	(16) only set object to BLACK, those already in BLACK are not affected
 *	(17)
 
 		// GREY(o) ==> GREY(w)
-		H&P_1:	stageC = Tracing && ∀t·phaseC = phase[t] = Async && w.color = BLACK && GREY(w) = n ≥ 1 && (∃w· x.f |-> w && w ∈ GREY U BLACK) && {old, v} ⊆ GREY U BLACK
+		H&P_1:	stageC = Tracing
+			&&	∀t·phaseC = phase[t] = Async
+			&&	w.color = BLACK
+			&&	GREY(w) = n ≥ 1
+			&&	(∃w· x.f |-> w && w ∈ GREY U BLACK)
+			&&	{old, v} ⊆ GREY U BLACK
 		C_1:	GREY(w) = n - 1
 		
-		sp_1 = ∃y·{GREY(w) = n-1 && stageC = Tracing && ∀t·phaseC = phase[t] = Async && w.color = BLACK && y = n ≥ 1 && (...) && {old, v} ⊆ GREY U BLACK}
+		sp_1 = ∃y·{
+			GREY(w) = n-1
+		&&	stageC = Tracing
+		&&	∀t·phaseC = phase[t] = Async
+		&&	w.color = BLACK
+		&&	y = n ≥ 1
+		&&	(...)
+		&&	{old, v} ⊆ GREY U BLACK
+		}
 
-		sp_1 => H? success
+	sp_1 => H? success
 
 
 		// GREY(o) ==> GREY(old)
-		H&P_2:	stageC = Tracing && ∀t·phaseC = phase[t] = Async && old.color = BLACK && GREY(old) = n ≥ 1 && (.. || ..) && {old, v} ⊆ GREY U BLACK
+		H&P_2:	stageC = Tracing
+			&&	∀t·phaseC = phase[t] = Async
+			&&	old.color = BLACK
+			&&	GREY(old) = n ≥ 1
+			&&	(.. || ..)
+			&&	{old, v} ⊆ GREY U BLACK
 		C_2:	GREY(old) = n - 1
 		
-		sp_2 = ∃y·{GREY(old) = n-1 && stageC = Tracing && ∀t·phaseC = phase[t] = Async && old.color = BLACK && y = n ≥ 1 && (.. || ..) && {old, v} ⊆ GREY U BLACK}
+		sp_2 = ∃y·{
+			GREY(old) = n-1
+		&&	stageC = Tracing
+		&&	∀t·phaseC = phase[t] = Async
+		&&	old.color = BLACK
+		&&	y = n ≥ 1
+		&&	(.. || ..)
+		&&	{old, v} ⊆ GREY U BLACK
+		}
 		
-		sp_2 => H? success
+	sp_2 => H? success
 		
 		// GREY(o) ==> GREY(v)
-		H&P_3:	stageC = Tracing && ∀t·phaseC = phase[t] = Async && v.color = BLACK && GREY(v) = n ≥ 1 && (.. || ..) && {old, v} ⊆ GREY U BLACK
+		H&P_3:	stageC = Tracing
+			&&	∀t·phaseC = phase[t] = Async
+			&&	v.color = BLACK
+			&&	GREY(v) = n ≥ 1
+			&&	(.. || ..)
+			&&	{old, v} ⊆ GREY U BLACK
 		C_3:	GREY(v) = n - 1
 		
-		sp_3 = ∃y·{GREY(v) = n-1 && stageC = Tracing && ∀t·phaseC = phase[t] = Async && v.color = BLACK && y = n ≥ 1 && (.. || ..) && {old, v} ⊆ GREY U BLACK}
+		sp_3 = ∃y·{
+			GREY(v) = n-1
+		&&	stageC = Tracing
+		&&	∀t·phaseC = phase[t] = Async
+		&&	v.color = BLACK
+		&&	y = n ≥ 1
+		&&	(.. || ..)
+		&&	{old, v} ⊆ GREY U BLACK
+		}
 		
-		sp_3 => H? success
+	sp_3 => H? success
 
 *	(19)
 
-		H&P:	phaseC = Async && roots[t] ⊆ GREY && phase[t] = Sync2 && (.. || ..) && {old, v} ⊆ GREY U BLACK
+		H&P:	phaseC = Async
+			&&	roots[t] ⊆ GREY
+			&&	phase[t] = Sync2
+			&&	(.. || ..)
+			&&	{old, v} ⊆ GREY U BLACK
 		C:		phase[t] = Async
 		
-		sp = ∃y·{phase[t] = Async && phaseC = Async && roots[t] ⊆ GREY && y = Sync2 && (.. || ..) && {old, v} ⊆ GREY U BLACK}
+		sp = ∃y·{
+			phase[t] = Async
+		&&	phaseC = Async
+		&&	roots[t] ⊆ GREY
+		&&	y = Sync2
+		&&	(.. || ..)
+		&&	{old, v} ⊆ GREY U BLACK
+		}
 		
-		sp => H? success
+	sp => H? success
 
 *	(29) only change lastRead[t], independent
 
@@ -998,72 +1352,156 @@ the same as "after 5"
 *	(4) change phase[t'] of another mutator thread, independent
 *	(11)
 
-		H&P:	phase[t] = Async && stageC ∈ {RESTING, CLEAR_OR_MARKING} && (phase[t] = Sync2 || stageC = Tracing || phase[t] = Sync1) == false
+		H&P:	phase[t] = Async
+			&&	stageC ∈ {RESTING, CLEAR_OR_MARKING}
+			&&	(phase[t] = Sync2 || stageC = Tracing || phase[t] = Sync1) == false
 
 *	(12)
 
-		H&P:	phase[t] = Sync1 && {x, v'} ⊆ reachables(roots[t]) && v' ∈ GREY && x.f |-> _ && {old, v} ⊆ GREY U BLACK
+		H&P:	phase[t] = Sync1
+			&&	{x, v'} ⊆ reachables(roots[t])
+			&&	v' ∈ GREY
+			&&	x.f |-> _
+			&&	{old, v} ⊆ GREY U BLACK
 		C:		x.f |-> v'
 		
-		sp = ∃y·{x.f |-> v' && phase[t] = Sync1 && {x, v'} ⊆ reachables(roots[t]) && v' ∈ GREY && y |-> _ && {old, v} ⊆ GREY U BLACK}
+		sp = ∃y·{
+			x.f |-> v'
+		&&	phase[t] = Sync1
+		&&	{x, v'} ⊆ reachables(roots[t])
+		&&	v' ∈ GREY
+		&&	y |-> _
+		&&	{old, v} ⊆ GREY U BLACK
+		}
 
-		sp => H? success
+	sp => H? success
 
 *	(13)
 
-		H&P:	phase[t] = Sync2 && {x, v'} ⊆ reachables(roots[t]) && {v'} ⊆ GREY U BLACK && (x.f |-> v || ∃w· x.f |-> w && w ∈ GREY U BLACK) && {old, v} ⊆ GREY U BLACK
+		H&P:	phase[t] = Sync2
+			&&	{x, v'} ⊆ reachables(roots[t])
+			&&	{v'} ⊆ GREY U BLACK
+			&&	(x.f |-> v || ∃w· x.f |-> w && w ∈ GREY U BLACK)
+			&&	{old, v} ⊆ GREY U BLACK
 		C:		x.f |-> v'
 		
-		sp = ∃y·{x.f |-> v' && phase[t] = Sync2 && {x, v'} ⊆ reachables(roots[t]) && {v'} ⊆ GREY U BLACK && (y |-> v || ∃w· y |-> w && w ∈ GREY U BLACK) && {old, v} ⊆ GREY U BLACK}
-		
-		sp => H? success
+		sp = ∃y·{
+			x.f |-> v'
+		&&	phase[t] = Sync2
+		&&	{x, v'} ⊆ reachables(roots[t])
+		&&	{v'} ⊆ GREY U BLACK
+		&&	(y |-> v || ∃w· y |-> w && w ∈ GREY U BLACK)
+		&&	{old, v} ⊆ GREY U BLACK
+		}
+
+	sp => H? success
 
 *	(14)
 
-		H&P:	stageC = Tracing && {v', x} ⊆ reachables(roots[t]) && {v'} ⊆ GREY U BLACK && (x.f |-> v || ∃w· x.f |-> w && w ∈ GREY U BLACK) && {old, v} ⊆ GREY U BLACK
+		H&P:	stageC = Tracing
+			&&	{v', x} ⊆ reachables(roots[t])
+			&&	{v'} ⊆ GREY U BLACK
+			&&	(x.f |-> v || ∃w· x.f |-> w && w ∈ GREY U BLACK)
+			&&	{old, v} ⊆ GREY U BLACK
 		C:		x.f |-> v'
 		
-		sp = ∃y·{x.f |-> v' && stageC = Tracing && {v', x} ⊆ reachables(roots[t]) && {v'} ⊆ GREY U BLACK && (y |-> v || ∃w· y |-> w && w ∈ GREY U BLACK)} && {old, v} ⊆ GREY U BLACK
+		sp = ∃y·{
+			x.f |-> v'
+		&&	stageC = Tracing
+		&&	{v', x} ⊆ reachables(roots[t])
+		&&	{v'} ⊆ GREY U BLACK
+		&&	(y |-> v || ∃w· y |-> w && w ∈ GREY U BLACK)}
+		&&	{old, v} ⊆ GREY U BLACK
 		
-		sp => H? success
+	sp => H? success
 
 *	(15) only add object into GREY, those already in GREY are not affected
 *	(16) only set object to BLACK, those already in BLACK are not affected
 *	(17)
 
 		// GREY(o) ==> GREY(w)
-		H&P_1:	stageC = Tracing && ∀t·phaseC = phase[t] = Async && w.color = BLACK && GREY(w) = n ≥ 1 && (∃w· x.f |-> w && w ∈ GREY U BLACK) && {old, v} ⊆ GREY U BLACK
+		H&P_1:	stageC = Tracing
+			&&	∀t·phaseC = phase[t] = Async
+			&&	w.color = BLACK
+			&&	GREY(w) = n ≥ 1
+			&&	(∃w· x.f |-> w && w ∈ GREY U BLACK)
+			&&	{old, v} ⊆ GREY U BLACK
 		C_1:	GREY(w) = n - 1
 		
-		sp_1 = ∃y·{GREY(w) = n-1 && stageC = Tracing && ∀t·phaseC = phase[t] = Async && w.color = BLACK && y = n ≥ 1 && (...) && {old, v} ⊆ GREY U BLACK}
+		sp_1 = ∃y·{
+			GREY(w) = n-1
+		&&	stageC = Tracing
+		&&	∀t·phaseC = phase[t] = Async
+		&&	w.color = BLACK
+		&&	y = n ≥ 1
+		&&	(...)
+		&&	{old, v} ⊆ GREY U BLACK
+		}
 
-		sp_1 => H? success
+	sp_1 => H? success
 
 
 		// GREY(o) ==> GREY(old)
-		H&P_2:	stageC = Tracing && ∀t·phaseC = phase[t] = Async && old.color = BLACK && GREY(old) = n ≥ 1 && (.. || ..) && {old, v} ⊆ GREY U BLACK
+		H&P_2:	stageC = Tracing
+			&&	∀t·phaseC = phase[t] = Async
+			&&	old.color = BLACK
+			&&	GREY(old) = n ≥ 1
+			&&	(.. || ..)
+			&&	{old, v} ⊆ GREY U BLACK
 		C_2:	GREY(old) = n - 1
 		
-		sp_2 = ∃y·{GREY(old) = n-1 && stageC = Tracing && ∀t·phaseC = phase[t] = Async && old.color = BLACK && y = n ≥ 1 && (.. || ..) && {old, v} ⊆ GREY U BLACK}
-		
-		sp_2 => H? success
+		sp_2 = ∃y·{
+			GREY(old) = n-1
+		&&	stageC = Tracing
+		&&	∀t·phaseC = phase[t] = Async
+		&&	old.color = BLACK
+		&&	y = n ≥ 1
+		&&	(.. || ..)
+		&&	{old, v} ⊆ GREY U BLACK
+		}
+
+	sp_2 => H? success
 		
 		// GREY(o) ==> GREY(v)
-		H&P_3:	stageC = Tracing && ∀t·phaseC = phase[t] = Async && v.color = BLACK && GREY(v) = n ≥ 1 && (.. || ..) && {old, v} ⊆ GREY U BLACK
+		H&P_3:	stageC = Tracing
+			&&	∀t·phaseC = phase[t] = Async
+			&&	v.color = BLACK
+			&&	GREY(v) = n ≥ 1
+			&&	(.. || ..)
+			&&	{old, v} ⊆ GREY U BLACK
 		C_3:	GREY(v) = n - 1
 		
-		sp_3 = ∃y·{GREY(v) = n-1 && stageC = Tracing && ∀t·phaseC = phase[t] = Async && v.color = BLACK && y = n ≥ 1 && (.. || ..) && {old, v} ⊆ GREY U BLACK}
+		sp_3 = ∃y·{
+			GREY(v) = n-1
+		&&	stageC = Tracing
+		&&	∀t·phaseC = phase[t] = Async
+		&&	v.color = BLACK
+		&&	y = n ≥ 1
+		&&	(.. || ..)
+		&&	{old, v} ⊆ GREY U BLACK
+		}
 		
-		sp_3 => H? success
+	sp_3 => H? success
 
 *	(19)
 
-		H&P:	phase[t] = Sync2 && phaseC = Async && roots[t] ⊆ GREY && (.. || ..) && {old, v} ⊆ GREY U BLACK
+		H&P:	phase[t] = Sync2
+			&&	phaseC = Async
+			&&	roots[t] ⊆ GREY
+			&&	(.. || ..)
+			&&	{old, v} ⊆ GREY U BLACK
 		C:		phase[t] = Async
 		
-		sp = ∃y·{phase[t] = Async && y = Sync2 && phaseC = Async && roots[t] ⊆ GREY && (.. || ..) && {old, v} ⊆ GREY U BLACK}
-		
-		sp => H? success
+		sp = ∃y·{
+			phase[t] = Async
+		&&	y = Sync2
+		&&	phaseC = Async
+		&&	roots[t] ⊆ GREY
+		&&	(.. || ..)
+		&&	{old, v} ⊆ GREY U BLACK
+		}
+
+	sp => H? success
 
 *	(29) only change lastRead[t], independent
 
@@ -1171,10 +1609,18 @@ Q is not taken into consideration, since it's proved to be correct under all rel
 
 *	(14)
 
-		H&P:	{ob, v'} ⊆ reachables(roots[t]) && {v'} ⊆ GREY U BLACK && (ob.f |-> o'' || ∃v· ob.f |-> v && v ∈ GREY U BLACK) && o'' ∈ GREY U BLACK
+		H&P:	{ob, v'} ⊆ reachables(roots[t])
+			&&	{v'} ⊆ GREY U BLACK
+			&&	(ob.f |-> o'' || ∃v· ob.f |-> v && v ∈ GREY U BLACK)
+			&&	o'' ∈ GREY U BLACK
 		C:		ob.f |-> v'
 		
-		sp = ∃y·{ob.f |-> v' && {ob, v'} ⊆ reachables(roots[t]) && {v', o''} ⊆ GREY U BLACK && (y |-> o'' || ∃v· y |-> v && v ∈ GREY U BLACK)}
+		sp = ∃y·{
+			ob.f |-> v'
+		&&	{ob, v'} ⊆ reachables(roots[t])
+		&&	{v', o''} ⊆ GREY U BLACK
+		&&	(y |-> o'' || ∃v· y |-> v && v ∈ GREY U BLACK)
+		}
 		
 	sp => H? success
 
@@ -1208,10 +1654,19 @@ Q is not taken into consideration, since it's proved to be correct under all rel
 
 *	(14)
 
-		H&P:	{ob, v'} ⊆ reachables(roots[t]) && {v'} ⊆ GREY U BLACK && (ob.f |-> o'' && o'' ∈ GREY U BLACK || o'' ∈ GREY && (∃v· ob.f |-> v && v ∈ GREY U BLACK)) && o''.color = WHITE
+		H&P:	{ob, v'} ⊆ reachables(roots[t])
+			&&	{v'} ⊆ GREY U BLACK
+			&&	(ob.f |-> o'' && o'' ∈ GREY U BLACK || o'' ∈ GREY && (∃v· ob.f |-> v && v ∈ GREY U BLACK))
+			&&	o''.color = WHITE
 		C:		ob.f |-> v'
 		
-		sp = ∃y·{ob.f |-> v' && {ob, v'} ⊆ reachables(roots[t]) && {v'} ⊆ GREY U BLACK && (y |-> o'' && o'' ∈ GREY U BLACK || o'' ∈ GREY && (∃v· y |-> v && v ∈ GREY U BLACK)) && o''.color = WHITE}
+		sp = ∃y·{
+			ob.f |-> v'
+		&&	{ob, v'} ⊆ reachables(roots[t])
+		&&	{v'} ⊆ GREY U BLACK
+		&&	(y |-> o'' && o'' ∈ GREY U BLACK || o'' ∈ GREY && (∃v· y |-> v && v ∈ GREY U BLACK))
+		&&	o''.color = WHITE
+		}
 
 	sp => H? success
 
@@ -1244,10 +1699,21 @@ Q is not taken into consideration, since it's proved to be correct under all rel
 
 *	(14)
 
-		H&P:	{ob, v'} ⊆ reachables(roots[t]) && {v'} ⊆ GREY U BLACK && (ob.f |-> o'' || (∃v· ob.f |-> v && v ∈ GREY U BLACK)) && o''.color = WHITE && o'' ∈ GREY
+		H&P:	{ob, v'} ⊆ reachables(roots[t])
+			&&	{v'} ⊆ GREY U BLACK
+			&&	(ob.f |-> o'' || (∃v· ob.f |-> v && v ∈ GREY U BLACK))
+			&&	o''.color = WHITE
+			&&	o'' ∈ GREY
 		C:		ob.f |-> v'
 		
-		sp = ∃y·{ob.f |-> v' && {ob, v'} ⊆ reachables(roots[t]) && {v'} ⊆ GREY U BLACK && (y |-> o'' || (∃v· y |-> v && v ∈ GREY U BLACK)) && o''.color = WHITE && o'' ∈ GREY}
+		sp = ∃y·{
+			ob.f |-> v'
+		&&	{ob, v'} ⊆ reachables(roots[t])
+		&&	{v'} ⊆ GREY U BLACK
+		&&	(y |-> o'' || (∃v· y |-> v && v ∈ GREY U BLACK))
+		&&	o''.color = WHITE
+		&& o'' ∈ GREY
+		}
 
 	sp => H? success
 
@@ -1280,10 +1746,17 @@ Q is not taken into consideration, since it's proved to be correct under all rel
 
 *	(14)
 
-		H&P:	{ob, v'} ⊆ reachables(roots[t]) && {v'} ⊆ GREY U BLACK && (∀ v ∈ Obj, f ∈ fields(ob)· ob.f |-> v => v ∈ BLACK U GREY)
+		H&P:	{ob, v'} ⊆ reachables(roots[t])
+			&&	{v'} ⊆ GREY U BLACK
+			&&	(∀ v ∈ Obj, f ∈ fields(ob)· ob.f |-> v => v ∈ BLACK U GREY)
 		C:		ob.f |-> v'
 		
-		sp = ∃y·{ob.f |-> v' && {ob, v'} ⊆ reachables(roots[t]) && {v'} ⊆ GREY U BLACK && (∀ v ∈ Obj, f ∈ fields(ob)· y |-> v => v ∈ BLACK U GREY)}
+		sp = ∃y·{
+			ob.f |-> v'
+		&&	{ob, v'} ⊆ reachables(roots[t])
+		&&	{v'} ⊆ GREY U BLACK
+		&&	(∀ v ∈ Obj, f ∈ fields(ob)· y |-> v => v ∈ BLACK U GREY)
+		}
 
 	sp => H? success
 
@@ -1344,10 +1817,19 @@ Therefore R is proved with respect to all relies, from now on, R can be used wit
 *	(11)..(14) change ob.f, independent
 *	(15)
 
-		H&P:	o ∈ reachables(roots[t]) && GREY = R && GREY ≠ ∅ && bucket[t] ≠ ∅
+		H&P:	o ∈ reachables(roots[t])
+			&&	GREY = R
+			&&	GREY ≠ ∅
+			&&	bucket[t] ≠ ∅
 		C:		GREY = R (+) {o}
 		
-		sp = ∃y·{GREY = y (+) {o} && o ∈ reachables(roots[t]) && y = R && y ≠ ∅ && bucket[t] ≠ ∅}
+		sp = ∃y·{
+			GREY = y (+) {o}
+		&&	o ∈ reachables(roots[t])
+		&&	y = R
+		&&	y ≠ ∅
+		&&	bucket[t] ≠ ∅
+		}
 
 	sp => H? success
 
@@ -1356,10 +1838,19 @@ Therefore R is proved with respect to all relies, from now on, R can be used wit
 *	(26)(27) change ob.color, independent
 *	(31)
 
-		H&P:	lastWrite[t] = v && v + n ≤ BUCKET_SIZE && bucket[t] ≠ ∅ && GREY ≠ ∅
+		H&P:	lastWrite[t] = v
+			&&	v + n ≤ BUCKET_SIZE
+			&&	bucket[t] ≠ ∅
+			&&	GREY ≠ ∅
 		C:		lastWrite[t] = v + n
 		
-		sp = ∃y·{lastWrite[t] = v + n && y = v && v + n ≤ BUCKET_SIZE && bucket[t] ≠ ∅ && GREY ≠ ∅}
+		sp = ∃y·{
+			lastWrite[t] = v + n
+		&&	y = v
+		&&	v + n ≤ BUCKET_SIZE
+		&&	bucket[t] ≠ ∅
+		&&	GREY ≠ ∅
+		}
 
 	sp => H? success
 
@@ -1378,10 +1869,19 @@ So Q is proved correct with respect to all relies, from now on, Q can be used wi
 *	(26)(27) change ob.color, independent
 *	(31)
 
-		H&P:	lastWrite[t] = v && v + n ≤ BUCKET_SIZE && o ∈ GREY && o ∈ bucket[t]
+		H&P:	lastWrite[t] = v
+			&&	v + n ≤ BUCKET_SIZE
+			&&	o ∈ GREY
+			&&	o ∈ bucket[t]
 		C:		lastWrite[t] = v + n
 		
-		sp = ∃y·{lastWrite[t] = v + n && y = v && v + n ≤ BUCKET_SIZE && o ∈ GREY && o ∈ bucket[t]}
+		sp = ∃y·{
+			lastWrite[t] = v + n
+		&&	y = v
+		&&	v + n ≤ BUCKET_SIZE
+		&&	o ∈ GREY
+		&& o ∈ bucket[t]
+		}
 
 	sp => H? success
 
@@ -1401,10 +1901,21 @@ So Q is proved correct with respect to all relies, from now on, Q can be used wi
 
 *	(31)
 
-		H&P:	lastWrite[t] = v && v + n ≤ BUCKET_SIZE && o ∈ GREY && o ∈ bucket[t] && o.color = WHITE
+		H&P:	lastWrite[t] = v
+			&&	v + n ≤ BUCKET_SIZE
+			&&	o ∈ GREY
+			&&	o ∈ bucket[t]
+			&&	o.color = WHITE
 		C:		lastWrite[t] = v + n
 		
-		sp = ∃y·{lastWrite[t] = v + n && y = v && v + n ≤ BUCKET_SIZE && o ∈ GREY && o ∈ bucket[t] && o.color = WHITE}
+		sp = ∃y·{
+			lastWrite[t] = v + n
+		&&	y = v
+		&&	v + n ≤ BUCKET_SIZE
+		&&	o ∈ GREY
+		&&	o ∈ bucket[t]
+		&&	o.color = WHITE
+		}
 
 	sp => H? success
 
@@ -1424,10 +1935,23 @@ So Q is proved correct with respect to all relies, from now on, Q can be used wi
 
 *	(31)
 
-		H&P:	lastWrite[t] = v && v + n ≤ BUCKET_SIZE && o.color = WHITE && o ∈ GREY && o ∈ bucket[t] && o ∈ bucket[C]
+		H&P:	lastWrite[t] = v
+			&&	v + n ≤ BUCKET_SIZE
+			&&	o.color = WHITE
+			&&	o ∈ GREY
+			&&	o ∈ bucket[t]
+			&&	o ∈ bucket[C]
 		C:		lastWrite[t] = v + n
 		
-		sp = ∃y·{lastWrite[t] = v + n && y = v && v + n ≤ BUCKET_SIZE && o.color = WHITE && o ∈ GREY && o ∈ bucket[t] && o ∈ bucket[C]}
+		sp = ∃y·{
+			lastWrite[t] = v + n
+		&&	y = v
+		&&	v + n ≤ BUCKET_SIZE
+		&&	o.color = WHITE
+		&&	o ∈ GREY
+		&&	o ∈ bucket[t]
+		&&	o ∈ bucket[C]
+		}
 
 	sp => H? success
 
