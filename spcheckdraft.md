@@ -1013,60 +1013,72 @@ all other assertions in cooperate() is Phase_inv[t], thus considered to be true 
 
 ##### PRE (∀t·phase[t], phaseC)
 
-*	(6)
+	H:	Phase_inv && {∀t · phase[t] = phaseC = X}
+
+*	Phase_rely_C:
 
 		H&P:	{(∃t· phase[t] (+) 1 = phaseC) && (∀t·phase[t] = phaseC} == false
 
-*	UpdateResting:(12)(13)(14) change o.f, independent
-*	(15) change GREY, independent
-*	(19)
+*	UpdateResting, UpdateS1, UpdateS2, UpdateTracing: change o.f, independent
+*	MarkGrey: change GREY, independent
+*	PhaseS2:
 
 		H&P:	{(∃t·phaseC = Async && phase[t] = Sync2) && (∀t·phase[t] = phaseC)} == false
 
-*	(25) change roots, independent
-*	(26)(27) change FREELIST, independent
-*	(31) change lastWrite[t], independent
+*	LoadWhite, LoadBlack: change register & roots, independent
+*	NewWhite, NewBlack: change FREELIST, independent
+*	Bucket_rely_C: change lastWrite[t], independent
 
 	
 ##### after 1 (∀t·phase[t], phaseC, tmp)
+
+	H:	Phase_inv && {(∀t · phase[t] = phaseC) && tmp = phaseC = X}
 
 "after 1" is the same as "PRE" except that it adds the relation between tmp and phaseC. Since tmp is a local variable, everything is the same as the proof for "PRE".
 
 
 ##### after 2 (phaseC)
 
-*	(6) change phase[t], independent
-*	UpdateResting:(12)(13)(14) change o.f, independent
-*	(15) change GREY, independent
-*	(19) change phase[t], independent
-*	(25) change roots, independent
-*	(26)(27) change FREELIST, independent
-*	(31) change lastWrite[t], independent
+	H:	Phase_inv && {phaseC = X (+) 1}
+
+*	Phase_rely_C: change phase[t], independent
+*	UpdateResting, UpdateS1, UpdateS2, UpdateTracing: change o.f, independent
+*	MarkGrey: change GREY, independent
+*	PhaseS2: change phase[t], independent
+*	LoadWhite, LoadBlack: change register & roots, independent
+*	NewWhite, NewBLack: change FREELIST, independent
+*	Bucket_rely_C: change lastWrite[t], independent
 
 
 ##### after 3 (phaseC)
+
+	H:	Phase_inv && {phaseC = X (+) 1}
 
 exactly the same as "after 2"
 
 
 ##### after 4 while loop (for some t: phase[t], phaseC)
 
-*	(6)
+	H:	Phase_inv && {phase[t] = phaseC = X (+) 1}
+
+*	Phase_rely_C:
 
 		H&P:	{phase[t] (+) 1 = phaseC && phase[t] = phaseC} == false
 
-*	UpdateResting:(12)(13)(14) change o.f, independent
-*	(15) change GREY, independent
-*	(19)
+*	UpdateResting, UpdateS1, UpdateS2, UpdateTracing: change o.f, independent
+*	MarkGrey: change GREY, independent
+*	PhaseS2:
 
 		H&P:	{(phaseC = Async && phase[t] = Sync2) && (phase[t] = phaseC)} == false
 
-*	(25) change roots, independent
-*	(26)(27) change FREELIST, independent
-*	(31) change lastWrite[t], independent
+*	LoadWhite, LoadBlack: change register & roots, independent
+*	NewWhite, NewBlack: change FREELIST, independent
+*	Bucket_rely_C: change lastWrite[t], independent
 
 
 ##### after 4 for loop / POST (∀t·phase[t], phaseC)
+
+	H:	Phase_inv && {∀t · phase[t] = phaseC = X (+) 1}
 
 similar to "PRE", except that the value of phase[t] and phase is different. The proof is the same as "PRE".
 
