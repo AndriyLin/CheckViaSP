@@ -2079,9 +2079,10 @@ Therefore R is proved with respect to all relies, from now on, R can be used wit
 
 	H:	{bucket[t] ≠ ∅ && GREY ≠ ∅} △= Q
 
-*	(6) change phase[t], independent
-*	UpdateResting:..(14) change ob.f, independent
-*	(15)
+*	Phase_rely_C: change phase[t], independent
+*	UpdateResting, UpdateS1, UpdateS2, UpdateTracing: change ob.f, independent
+
+*	MarkGrey:
 
 		H&P:	o ∈ reachables(roots[t])
 			&&	GREY = R
@@ -2099,10 +2100,11 @@ Therefore R is proved with respect to all relies, from now on, R can be used wit
 
 	sp => H? success
 
-*	(19) change phase[t], independent
-*	(25) change register & roots[t], independent
-*	(26)(27) change ob.color, independent
-*	(31)
+*	PhaseS2: change phase[t], independent
+*	LoadWhite, LoadBlack: change register & roots[t], independent
+*	NewWhite, NewBlack: new object from freelist and set its color, independent
+
+*	Bucket_rely_C:
 
 		H&P:	lastWrite[t] = v
 			&&	v + n ≤ BUCKET_SIZE
@@ -2127,13 +2129,14 @@ So Q is proved correct with respect to all relies, from now on, Q can be used wi
 
 	H:	Q && o ∈ GREY && o ∈ bucket[t]
 
-*	(6) change phase[t], independent
-*	UpdateResting:..(14) change ob.f, independent
-*	(15) only add object into GREY, those already in GREY are not affected
-*	(19) change phase[t], independent
-*	(25) change register & roots[t], independent
-*	(26)(27) change ob.color, independent
-*	(31)
+*	Phase_rely_C: change phase[t], independent
+*	UpdateResting, UpdateS1, UpdateS2, UpdateTracing: change ob.f, independent
+*	MarkGrey: only add object into GREY, those already in GREY are not affected
+*	PhaseS2: change phase[t], independent
+*	LoadWhite, LoadBlack: change register & roots[t], independent
+*	NewWhite, NewBlack:  new object from freelist and set its color, independent
+
+*	Bucket_rely_C:
 
 		H&P:	lastWrite[t] = v
 			&&	v + n ≤ BUCKET_SIZE
@@ -2156,16 +2159,17 @@ So Q is proved correct with respect to all relies, from now on, Q can be used wi
 
 	H:	Q && o.color = WHITE && o ∈ GREY && o ∈ bucket[t]
 
-*	(6) change phase[t], independent
-*	UpdateResting:..(14) change ob.f, independent
-*	(15) only add object into GREY, those already in GREY are not affected
-*	(19) change phase[t], independent
-*	(25) change register & roots[t], independent
-*	(26)(27)
+*	Phase_rely_C: change phase[t], independent
+*	UpdateResting, UpdateS1, UpdateS2, UpdateTracing: change ob.f, independent
+*	MarkGrey: only add object into GREY, those already in GREY are not affected
+*	PhaseS2: change phase[t], independent
+*	LoadWhite, LoadBlack: change register & roots[t], independent
+
+*	NewWhite, NewBlack:
 
 		H&P:	{o.color = WHITE && o.color = BLUE && ..} == false
 
-*	(31)
+*	Bucket_rely_C:
 
 		H&P:	lastWrite[t] = v
 			&&	v + n ≤ BUCKET_SIZE
@@ -2190,16 +2194,17 @@ So Q is proved correct with respect to all relies, from now on, Q can be used wi
 
 	H:	Q && o.color = WHITE && o ∈ GREY && o ∈ bucket[t] o ∈ bucket[C]
 
-*	(6) change phase[t], independent
-*	UpdateResting:..(14) change o.f, independent
-*	(15) only add object into GREY, those already in GREY are not affected
-*	(19) change phase[t], independent
-*	(25) change register & roots[t], independent
-*	(26)(27)
+*	Phase_rely_C: change phase[t], independent
+*	UpdateResting, UpdateS1, UpdateS2, UpdateTracing: change o.f, independent
+*	MarkGrey: only add object into GREY, those already in GREY are not affected
+*	PhaseS2: change phase[t], independent
+*	LoadWhite, LoadBlack: change register & roots[t], independent
+
+*	NewWhite, NewBlack:
 
 		H&P:	{o.color = WHITE && o.color = BLUE && ..} == false
 
-*	(31)
+*	Bucket_rely_C:
 
 		H&P:	lastWrite[t] = v
 			&&	v + n ≤ BUCKET_SIZE
