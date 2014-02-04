@@ -27,89 +27,109 @@ in the form of Precondition & Command
 
 ##### relies for mutator thread
 
-*	(3) Phase[t]
+**TODO** rewrite the text numbers
+
+*	**Phase_rely_t**, on collector thread, NO.(three) in .tex, former (3)
 
 		{∀t· phase[t] = phaseC =X}
 			phaseC = X (+) 1
 
-*	(4) Phase[t]
+*	**Phase_rely_t'**, on another mutator thread, NO.(four) in .tex, former (4)
 
 		{∃t'· t' ≠ t && phase[t'] (+) 1 = phaseC = X}
 			phase[t'] = X
 
-*	(11) UpdateResting[t]
+*	**UpdateResting**, on another mutator thread, NO.(twelve) in .tex, former (11)
 
 		{phase[t] = Async && stageC ∈ {RESTING, CLEAR_OR_MARKING} && {o, v} ⊆ reachables(roots[t]) && o.f |-> _}
 			o.f |-> v
 
-*	(12) UpdateS1[t]
+*	**UpdateS1**, on another mutator thread, NO.(thriteen), former (12)
 
 		{phase[t] = Sync1 && {o, v} ⊆ reachables(roots[t]) && v ∈ GREY && o.f |-> _}
 			o.f |-> v
 
-*	(13) UpdateS2[t]
+*	**UpdateS2**, on another mutator thread, NO.(fourteen), former (13)
 
 		{phase[t] = Sync2 && {o, v} ⊆ reachables(roots[t]) && {v, o'} ⊆ GREY U BLACK && o.f |-> o'}
 			o.f |-> v
 
-*	(14) UpdateTracing
+*	**UpdateTracing**, on another mutator thread, NO.(fifteen), former (14)
 
 		{phase[t] = Async && stageC ∈ {TRACING, SWEEPING} && {v, o} ⊆ reachables(roots[t]) && {v, o'} ⊆ GREY U BLACK && o.f |-> o'}
 			o.f |-> v
 
-*	(15) MarkGrey[t]
+*	**MarkGrey**, on collector thread or another mutator thread, NO.(sixteen), former (15)
 
 		{(phase[t] ≠ Async || stageC ≠ RESTING) && o ∈ reachables(roots[t]) && GREY = R}
 			GREY = R (+) {o}
 
-*	(16) MarkBlack
+*	**MarkBlack**, on collector thread, NO.(seventeen), former (16)
 
 		{stageC = TRACING && (∀t ∈ T · phaseC = phase[t] = Async) && (∀f ∈ fields(o), o' ∈ Obj · o.f |-> o' => o' ∈ GREY U BLACK) && o.color = WHITE && GREY(o) = n ≥ 1}
 			o.color = BLACK
 
-*	(17) RemoveGrey
+*	**RemoveGrey**, on collector thread, NO.(eighteen), former (17)
 
 		{stageC = TRACING && (∀t ∈ T · phaseC = phase[t] = Async) && o.color = BLACK && GREY(o) = n ≥ 1}
 			GREY(o) = n - 1
 
-*	(19) PhaseS2[t]
+
+	**TODO** remove following if it doesn't hurt
+*	**PhaseS2**, on another mutator thread, NO.(twenty), former (19)
 
 		{phaseC = Async && roots[t] ⊆ GREY && phase[t] = Sync2}
 			phase[t] = Async
 
-*	(29) Bucket[t]
+*	**LoadWhite**, on another mutator thread, NO.(twentysix), no former
 
-		{lastRead[t] = v && lastWrite[t] = v' && v + n ≤ v'}
-			lastRead[t] = v + n
-
-
-##### relies for collector thread (duplication are removed)
-
-*	(6) Phase[C]
-
-		{∃t · phase[t] (+) 1 = phaseC = X}
-			phase[t] = X
-
-*	(11)(12)(13)(14)(15)(19) duplicated
-*	(25) Load[t]
-
-		{r0 = o && r1 = o' && f ∈ fields(o) && [o' + f] |-> o'' && {o, o'} ⊆ roots[t] = R && (phase[t] = Async && o''.color = WHITE => o'' ∈ reachables(GREY))}
+		{r0 = o && r1 = o' && f ∈ fields(o) && [o' + f] |-> o'' && {o, o'} ⊆ roots[t] = R && o''.color = WHITE && (phase[t] = Async => o'' ∈ reachables(GREY))}
 			r0 = o'' && roots[t] = R (-) {o} (+) {o''}
 
-*	(26) NewWhite[t]
+*	**LoadBlack**, on another mutator thread, NO.(twentyseven), no former
+
+		{r0 = o && r1 = o' && f ∈ fields(o) && [o' + f] |-> o'' && {o, o'} ⊆ roots[t] = R && o''.color = BLACK}
+			r0 = o'' && roots[t] = R (-) {o} (+) {o''}
+
+*	**NewWhite**, on another mutator thread, NO.(twentyeight), no former
 
 		{freelist |-> FREELIST && o ∈ FREELIST && o.color = BLUE && (phase[t] ≠ Async || stageC = CLEAR_OR_MARKING)}
 			freelist |-> FREELIST / {o} && o.color = WHITE
 
-*	(27)
+*	**NewBlack**, on another mutator thread, NO.(twentynine), no former
 
 		{freelist |-> FREELIST && o ∈ FREELIST && o.color = BLUE && (phase[t] = Async && stageC ≠ CLEAR_OR_MARKING)}
 			freelist |-> FREELIST / {o} && o.color = BLACK
 
-*	(31) Bucket[C]
+*	**Bucket_rely_t**, on collector thread, NO.(thirtyone), former (29)
 
-		{∃t ∈ T · (lastWrite[t] = v && v + n ≤ BUCKET_SIZE)}
-			lastWrite[t] = v + n
+		{lastRead[t] = v && lastWrite[t] = v' && v + n ≤ v'}
+			lastRead[t] = v + n
+
+*	**Bucket_rely_t'**, on another mutator thread, NO.(thirtytwo), no former
+
+		{lastRead[t'] = v && lastWrite[t'] = v' && v + n ≤ v'}
+			lastRead[t'] = v + n
+
+
+##### relies for collector thread (duplication are not written again)
+
+All the relies for collector thread happened on one mutator thread t.
+
+*	**Phase_rely_C**, NO.(six), former (6), same as **Phase_rely_t'**.
+
+*	**UpdateResting**, NO.(twelve), former (11)
+*	**UpdateS1**, NO.(thirteen), former (12)
+*	**UpdateS2**, NO.(fourteen), former (13)
+*	**UpdateTracing**, NO.(fifteen), former (14)
+*	**MarkGrey**, NO.(sixteen), former (15)
+*	**PhaseS2**, NO.(twenty), former (19)
+*	**LoadWhite**, NO.(twentysix), no former
+*	**LoadBlack**, NO.(twentyseven), no former
+*	**NewWhite**, NO.(twentyeight), former (26)
+*	**NewBlack**, NO.(twentynine), former (27)
+
+*	**Bucket_rely_C**, NO.(thirtythree), same as **Bucket_rely_t'**.
 
 -----
 
