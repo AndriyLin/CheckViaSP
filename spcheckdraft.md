@@ -1013,7 +1013,7 @@ all other assertions in cooperate() is Phase_inv[t], thus considered to be true 
 
 ##### PRE (∀t·phase[t], phaseC)
 
-	H:	Phase_inv && {∀t · phase[t] = phaseC = X}
+	Pre:	Phase_inv && {∀t · phase[t] = phaseC = X}
 
 *	Phase_rely_C:
 
@@ -1088,8 +1088,11 @@ similar to "PRE", except that the value of phase[t] and phase is different. The 
 
 ##### PRE (x, f, v, roots[t])
 
+	Pre:	x.f |-> _ && {x, v} ⊆ roots[t]
+
 *	Phase_rely_t: change phaseC, independent
 *	Phase_rely_t': change phase[t'] of another mutator thread, independent
+
 *	UpdateResting:
 	
 		H&P:	x.f |-> _
@@ -1111,7 +1114,7 @@ similar to "PRE", except that the value of phase[t] and phase is different. The 
 
 	sp => H? success
 	
-*	(12)
+*	UpdateS1:
 	
 		H&P:	x.f |-> _
 			&&	{x, v} ⊆ roots[t]
@@ -1132,18 +1135,37 @@ similar to "PRE", except that the value of phase[t] and phase is different. The 
 	
 	sp => H? success
 	
-*	(13)(14)
+*	UpdateS2, UpdateTracing:
 	
 	similar to UpdateResting: and (12), C only assign a new value to x.f, it won't affect roots[t]. In H, "x.f |-> _" so any assignment won't invalidate it.
 		
-*	(15) change GREY, independent
-*	(16) change o.color, independent
-*	(17) change GREY, independent
-*	(19) change phase[t], independent
-*	(29) change lastRead[t], independent
+*	MarkGrey: change GREY, independent
+*	MarkBlack: change o.color, independent
+*	RemoveGrey: change GREY, independent
+*	PhaseS2: change phase[t], independent
+
+*	LoadWhite: **TODO** failed to withstand?
+*	LoadBlack: **TODO**
+
+*	**LoadWhite**, on another mutator thread, NO.(twentysix), no former
+
+		{r0 = o && r1 = o' && f ∈ fields(o) && [o' + f] |-> o'' && {o, o'} ⊆ roots[t] = R && o''.color = WHITE && (phase[t] = Async => o'' ∈ reachables(GREY))}
+			r0 = o'' && roots[t] = R (-) {o} (+) {o''}
+
+*	**LoadBlack**, on another mutator thread, NO.(twentyseven), no former
+
+		{r0 = o && r1 = o' && f ∈ fields(o) && [o' + f] |-> o'' && {o, o'} ⊆ roots[t] = R && o''.color = BLACK}
+			r0 = o'' && roots[t] = R (-) {o} (+) {o''}
 
 
-##### after 3 (phast[t], stageC, x.f, old, w, GREY, BLACK)
+
+
+*	NewWhite, NewBlack: change freelist & o.color, independent
+*	Bucket_rely_t: change lastRead[t], independent
+*	Bucket_rely_t': change lastWrite[t'] of another mutator thread, independent
+
+
+##### after 3 (phase[t], stageC, x.f, old, w, GREY, BLACK)
 
 	H:	phase[t] = Sync2 || stageC = TRACING
 		=>
@@ -1155,12 +1177,12 @@ similar to "PRE", except that the value of phase[t] and phase is different. The 
 
 		H&P:	{(phase[t] = Sync2 || stageC = TRACING) && (phase[t] = Async && stageC ∈ {Resting, ClearOrMarking})} == false
 
-*	(12)
+*	UpdateS1:
 
 		// phase[t] = Sync1 => stageC = ClearOrMarking
 		H&P:	(phase[t] = Sync2 || stageC = TRACING) && (phase[t] = Sync1)} == false
 
-*	(13)
+*	UpdateS2:
 
 		H&P:	phase[t] = Sync2
 			&&	{x, v'} ⊆ reachables(roots[t])
@@ -1178,7 +1200,7 @@ similar to "PRE", except that the value of phase[t] and phase is different. The 
 
 	sp => H? success
 
-*	(14)
+*	UpdateTracing:
 
 		H&P:	stageC = Tracing
 			&&	{v', x} ⊆ reachables(roots[t])
@@ -1196,9 +1218,9 @@ similar to "PRE", except that the value of phase[t] and phase is different. The 
 
 	sp => H? success
 
-*	(15) only increase set GREY, those already in GREY are not affected
-*	(16) only set an obj to BLACK, those already in GREY U BLACK are not affected
-*	(17)
+*	MarkGrey: only increase set GREY, those already in GREY are not affected
+*	MarkBlack: only set an obj to BLACK, those already in GREY U BLACK are not affected
+*	RemoveGrey:
 
 		// the "x.f |-> old" branch is independent with respect to GREY(o), thus only consider the other branch
 
@@ -1220,7 +1242,7 @@ similar to "PRE", except that the value of phase[t] and phase is different. The 
 
 	sp => H? success
 
-*	(19)
+*	PhaseS2:
 
 		H&P:	phase[t] = Sync2
 			&&	phaseC = Async
@@ -1238,7 +1260,10 @@ similar to "PRE", except that the value of phase[t] and phase is different. The 
 
 	sp => H? success
 
-*	(29) change lastRead[t], independent
+*	LoadWhite, LoadBlack: change register & roots, here x.f is not register, thus independent
+*	NewWhite, NewBlack: new an object out of freelist, thus independent
+*	Bucket_rely_t: change lastRead[t], independent
+*	Bucket_rely_t': change lastWrite[t'] of another mutator thread, independent
 
 
 ##### after 4 (phase[t], stageC, x.f, GREY, BLACK)
@@ -1255,7 +1280,7 @@ similar to "PRE", except that the value of phase[t] and phase is different. The 
 
 		H&P:	(phase[t] = Sync2 || stageC = Tracing || phase[t] = Sync1) && (phase[t] = Async && stageC ∈ {RESTING, CLEAR_OR_MARKING}) == FALSE
 		
-*	(12)
+*	UpdateS1:
 
 		H&P:	phase[t] = Sync1
 			&&	{x, v'} ⊆ reachables(roots[t])
@@ -1275,7 +1300,7 @@ similar to "PRE", except that the value of phase[t] and phase is different. The 
 
 	sp => H? success
 		
-*	(13)
+*	UpdateS2:
 
 		// the same as (13) in "after 3"
 
@@ -1295,7 +1320,7 @@ similar to "PRE", except that the value of phase[t] and phase is different. The 
 
 	sp => H? success
 
-*	(14)
+*	UpdateTracing:
 
 		// the same as (14) in "after 3"
 		
@@ -1315,9 +1340,10 @@ similar to "PRE", except that the value of phase[t] and phase is different. The 
 
 	sp => H? success
 		
-*	(15) only add object into GREY, those already in GREY are not affected
-*	(16) only set obj to BLACK, those already in BLACK are not affected
-*	(17)
+*	MarkGrey: only add object into GREY, those already in GREY are not affected
+*	MarkBlack: only set obj to BLACK, those already in BLACK are not affected
+
+*	RemoveGrey:
 
 		// both "old" and "w" can be the object o in (17), thus consider them twice
 
@@ -1362,7 +1388,7 @@ similar to "PRE", except that the value of phase[t] and phase is different. The 
 
 	sp_2 => H? success
 
-*	(19)
+*	PhaseS2:
 
 		H&P:	phase[t] = Sync2
 			&&	phaseC = Async
@@ -1382,7 +1408,10 @@ similar to "PRE", except that the value of phase[t] and phase is different. The 
 
 	sp => H? success
 
-*	(29) change lastRead[t], independent
+*	LoadWhite, LoadBlack: change register & roots, independent
+*	NewWhtie, NewBlack: new an object from freelist, independent
+*	Bucket_rely_t: change lastRead[t], independent
+*	Bucket_rely_t': change lastWrite[t'] of another mutator t, independent
 
 
 ##### after 5 (phase[t], stageC, x.f, GREY, BLACK)
@@ -1401,7 +1430,7 @@ similar to "PRE", except that the value of phase[t] and phase is different. The 
 			&&	stageC ∈ {RESTING, CLEAR_OR_MARKING}
 			&&	(phase[t] = Sync2 || stageC = Tracing || phase[t] = Sync1) == false
 		
-*	(12)
+*	UpdateS1:
 
 		H&P:	phase[t] = Sync1
 			&&	{old, v} ⊆ GREY U BLACK
@@ -1421,7 +1450,7 @@ similar to "PRE", except that the value of phase[t] and phase is different. The 
 		
 	sp => H? success
 
-*	(13)
+*	UpdateS2:
 
 		H&P:	phase[t] = Sync2
 			&&	{x, v'} ⊆ reachables(roots[t])
@@ -1441,7 +1470,7 @@ similar to "PRE", except that the value of phase[t] and phase is different. The 
 		
 	sp => H? success
 
-*	(14)
+*	UpdateTracing:
 
 		H&P:	stageC = Tracing
 			&&	{v', x} ⊆ reachables(roots[t])
@@ -1461,9 +1490,10 @@ similar to "PRE", except that the value of phase[t] and phase is different. The 
 		
 	sp => H? success
 
-*	(15) only add object into GREY, those already in GREY are not affected
-*	(16) only set object to BLACK, those already in BLACK are not affected
-*	(17)
+*	MarkGrey: only add object into GREY, those already in GREY are not affected
+*	MarkBlack: only set object to BLACK, those already in BLACK are not affected
+
+*	RemoveGrey:
 
 		// GREY(o) ==> GREY(w)
 		H&P_1:	stageC = Tracing
@@ -1529,7 +1559,7 @@ similar to "PRE", except that the value of phase[t] and phase is different. The 
 		
 	sp_3 => H? success
 
-*	(19)
+*	PhaseS2:
 
 		H&P:	phaseC = Async
 			&&	roots[t] ⊆ GREY
@@ -1549,12 +1579,21 @@ similar to "PRE", except that the value of phase[t] and phase is different. The 
 		
 	sp => H? success
 
-*	(29) only change lastRead[t], independent
+*	LoadWhite, LoadBlack: change register & roots, independent
+*	NewWhite, NewBlack: new an object from freelist, independent
+*	Bucket_rely_t: only change lastRead[t], independent
+*	Bucket_rely_t': change lastWrite[t'] of another mutator thread, independent
 
 
 ##### after 6
 
-the same as "after 5"
+	H:	phase[t] = Sync2 || stageC = Tracing
+			=> (x.f |-> old || (∃w· x.f |-> w && w ∈ GREY U BLACK)) && {old, v} ⊆ GREY U BLACK
+		&&
+		phase[t] = Sync1
+			=> {old, v} ⊆ GREY U BLACK
+
+exactly the same as "after 5"
 
 
 ##### after 7 (phase[t], stageC, x.f, GREY, BLACK)
@@ -1573,7 +1612,7 @@ the same as "after 5"
 			&&	stageC ∈ {RESTING, CLEAR_OR_MARKING}
 			&&	(phase[t] = Sync2 || stageC = Tracing || phase[t] = Sync1) == false
 
-*	(12)
+*	UpdateS1:
 
 		H&P:	phase[t] = Sync1
 			&&	{x, v'} ⊆ reachables(roots[t])
@@ -1593,7 +1632,7 @@ the same as "after 5"
 
 	sp => H? success
 
-*	(13)
+*	UpdateS2:
 
 		H&P:	phase[t] = Sync2
 			&&	{x, v'} ⊆ reachables(roots[t])
@@ -1613,7 +1652,7 @@ the same as "after 5"
 
 	sp => H? success
 
-*	(14)
+*	UpdateTracing:
 
 		H&P:	stageC = Tracing
 			&&	{v', x} ⊆ reachables(roots[t])
@@ -1632,9 +1671,9 @@ the same as "after 5"
 		
 	sp => H? success
 
-*	(15) only add object into GREY, those already in GREY are not affected
-*	(16) only set object to BLACK, those already in BLACK are not affected
-*	(17)
+*	MarkGrey: only add object into GREY, those already in GREY are not affected
+*	MarkBlack: only set object to BLACK, those already in BLACK are not affected
+*	RemoveGrey:
 
 		// GREY(o) ==> GREY(w)
 		H&P_1:	stageC = Tracing
@@ -1700,7 +1739,7 @@ the same as "after 5"
 		
 	sp_3 => H? success
 
-*	(19)
+*	PhaseS2:
 
 		H&P:	phase[t] = Sync2
 			&&	phaseC = Async
@@ -1720,7 +1759,11 @@ the same as "after 5"
 
 	sp => H? success
 
-*	(29) only change lastRead[t], independent
+
+*	LoadWhite, LoadBlack: change register & roots, independent
+*	NewWhite, NewBlack: new an object out of freelist, independent
+*	Bucket_rely_t: only change lastRead[t], independent
+*	Bucket_rely_t': only change lastWrite[t'] of another mutator thread, independent
 
 -----
 
