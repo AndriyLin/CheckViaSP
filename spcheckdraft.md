@@ -30,37 +30,22 @@ in the form of Precondition & Command
 -----
 // for copying
 
-Phase_rely_t
-
-Phase_rely_t'
-
-UpdateResting
-
-UpdateS1
-
-UpdateS2
-
-UpdateTracing
-
-MarkGrey
-
-MarkBlack
-
-RemoveGrey
-
-PhaseS2
-
-LoadWhite
-
-LoadBlack
-
-NewWhite
-
-NewBlack
-
-Bucket_rely_t
-
-Bucket_rely_t'
+*	Phase_rely_t
+*	Phase_rely_t'
+*	UpdateResting
+*	UpdateS1
+*	UpdateS2
+*	UpdateTracing
+*	MarkGrey
+*	MarkBlack
+*	RemoveGrey
+*	PhaseS2
+*	LoadWhite
+*	LoadBlack
+*	NewWhite
+*	NewBlack
+*	Bucket_rely_t
+*	Bucket_rely_t'
 
 -----
 
@@ -173,29 +158,18 @@ All the relies for collector thread happened on one mutator thread t.
 -----
 // for copying
 
-Phase_rely_C
-
-UpdateResting
-
-UpdateS1
-
-UpdateS2
-
-UpdateTracing
-
-MarkGrey
-
-PhaseS2
-
-LoadWhite
-
-LoadBlack
-
-NewWhite
-
-NewBlack
-
-Bucket_rely_C
+*	Phase_rely_C
+*	UpdateResting
+*	UpdateS1
+*	UpdateS2
+*	UpdateTracing
+*	MarkGrey
+*	PhaseS2
+*	LoadWhite
+*	LoadBlack
+*	NewWhite
+*	NewBlack
+*	Bucket_rely_C
 
 -----
 
@@ -986,6 +960,9 @@ In parenthesis are the variables used in the assertion. (therefore only need to 
 
 ##### after 1 (tmp, phaseC, phase[t])
 
+	H:	Phase_inv[t] && {(tmp ≤ phaseC ≤ tmp (+) 1) && phase[t] ≤ tmp}
+	// Phase_inv[t] is invariant and has been proved above.
+
 *	Phase_rely_t:
 
 		H&P:	phaseC = phase[t] = tmp = X
@@ -996,23 +973,39 @@ In parenthesis are the variables used in the assertion. (therefore only need to 
 	sp => H? success
 
 *	Phase_rely_t': change phase[t'] (another thread), independent
-*	UpdateResting:(12)(13)(14) change o.f, independent
-*	(15) change GREY, independent
-*	(16) change o.color, independent
-*	(17) change GREY, independent
-*	(19) change phase[t'] (another thread), independent
-*	(29) change lastRead[t'] (another thread), independent
+*	UpdateResting, UpdateS1, UpdateS2, UpdateTracing: change o.f, independent
+*	MarkGrey: change GREY, independent
+*	MarkBlack: change o.color, independent
+*	RemoveGrey: change GREY, independent
+*	PhaseS2: change phase[t'] (another thread), independent
+*	LoadWhite, LoadBlack: change register & roots[t], independent
+*	NewWhite, NewBlack: change freelist & o.color, independent
+*	Bucket_rely_t: change lastRead[t], independent
+*	Bucket_rely_t': change lastWrite[t] of another thread, independent
 
 
 ##### after 3 (phase[t], phaseC, tmp)
+
+	H:	Phase_inv[t] && {phase[t] (+) 1 = phaseC && tmp = phaseC}
 
 *	Phase_rely_t:
 	
 		H&P:	{phase[t] (+) 1 = phaseC && phase[t] = phaseC} == false
 
-*	Phase_rely_t':...... all independent, the same as above
+*	Phase_rely_t': change phase[t'] (another thread), independent
+*	UpdateResting, UpdateS1, UpdateS2, UpdateTracing: change o.f, independent
+*	MarkGrey: change GREY, independent
+*	MarkBlack: change o.color, independent
+*	RemoveGrey: change GREY, independent
+*	PhaseS2: change phase[t'] (another thread), independent
+*	LoadWhite, LoadBlack: change register & roots[t], independent
+*	NewWhite, NewBlack: change freelist & o.color, independent
+*	Bucket_rely_t: change lastRead[t], independent
+*	Bucket_rely_t': change lastWrite[t] of another thread, independent
+
 
 all other assertions in cooperate() is Phase_inv[t], thus considered to be true all the time
+
 
 -----
 
