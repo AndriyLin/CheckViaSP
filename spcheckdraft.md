@@ -1771,21 +1771,22 @@ exactly the same as "after 5"
 
 ##### S (phase[t], phaseC, stageC)
 
-	H: (∀t· phase[t] = phaseC = Async) && stageC = Tracing
+	S:	(∀t· phase[t] = phaseC = Async) && stageC = Tracing
 
-*	(6)
+*	Phase_rely_C:
 
 		H&P:	{∃t· phase[t] (+) 1 = phaseC && ∀t· phase[t] = phaseC} == false
 
-*	UpdateResting:..(14) change x.f, independent
-*	(15) change GREY, independent
-*	(19)
+*	UpdateResting, UpdateS1, UpdateS2, UpdateTracing: change x.f, independent
+*	MarkGrey: change GREY, independent
+
+*	PhaseS2:
 
 		H&P:	{phase[t] = Sync2 && ∀t· phase[t] = phaseC = Async} == false
 
-*	(25) change a register & roots[t], independent
-*	(26)(27) change freelist & obj's color, independent
-*	(31) change bucket[t], independent
+*	LoadWhite, LoadBlack: change a register & roots[t], independent
+*	NewWhite, NewBlack: change freelist & obj's color, independent
+*	Bucket_rely_C: change bucket[t], independent
 
 	So now S is proved to be true with respect to all relies, from now on, S can be used without checking again.
 
@@ -1794,26 +1795,26 @@ exactly the same as "after 5"
 
 	H:	S && bucket[C] = X && reachables(X) = Y && X ⊆ GREY
 
-*	(6) change phase[t], independent
-*	UpdateResting:..(14) change x.f, independent
-*	(15) only add object to GREY, those already in GREY are not affected
-*	(19) change phase[t], independent
-*	(25) change a register & roots[t], reachables(X) starts from X, thus independent
-*	(26)(27) change freelist & obj's color, independent
-*	(31) change bucket[t], independent
+*	Phase_rely_C: change phase[t], independent
+*	UpdateResting, UpdateS1, UpdateS2, UpdateTracing: change x.f, independent
+*	MarkGrey: only add object to GREY, those already in GREY are not affected
+*	PhaseS2: change phase[t], independent
+*	LoadWhite, LoadBlack: change a register & roots[t], reachables(X) starts from X, thus independent
+*	NewWhite, NewBlack: change freelist & obj's color, independent
+*	Bucket_rely_C: change bucket[t], independent
 
 
 ##### after 7 (bucket[C])
 
 	H:	S && bucket[C] ≠ ∅
 
-*	(6) change phase[t], independent
-*	UpdateResting:..(14) change x.f, independent
-*	(15) change GREY, independent
-*	(19) change phase[t], independent
-*	(25) change register & roots[t], independent
-*	(26)(27) change freelist & obj's color, independent
-*	(31) change bucket[t], independent
+*	Phase_rely_C: change phase[t], independent
+*	UpdateResting, UpdateS1, UpdateS2, UpdateTracing: change x.f, independent
+*	MarkGrey: change GREY, independent
+*	PhaseS2: change phase[t], independent
+*	LoadWhite, LoadBlack: change register & roots[t], independent
+*	NewWhite, NewBlack: change freelist & obj's color, independent
+*	Bucket_rely_C: change bucket[t], independent
 
 
 ##### after 8 (bucket[C], GREY)
@@ -1827,16 +1828,17 @@ The variables that may be changed are subset of "before 7". So it's the same, al
 
 	H:	S && ob.color = WHITE && ob ∈ bucket[C] && ob ∈ GREY
 
-*	(6) change phase[t], independent
-*	UpdateResting:..(14) change x.f, independent
-*	(15) only add object into GREY, those already in GREY are not affected
-*	(19) change phase[t], independent
-*	(25) change a register & roots[t], independent
-*	(26)(27)
+*	Phase_rely_C: change phase[t], independent
+*	UpdateResting, UpdateS1, UpdateS2, UpdateTracing: change x.f, independent
+*	MarkGrey: only add object into GREY, those already in GREY are not affected
+*	PhaseS2: change phase[t], independent
+*	LoadWhite, LoadBlack: change a register & roots[t], independent
+
+*	NewWhite, NewBlack:
 
 		H&P:	{ob.color = WHITE && ob.color = BLUE && ...} == false
 
-*	(31) change bucket[t], independent
+*	Bucket_rely_C: change bucket[t], independent
 
 
 ##### after 11
@@ -1850,24 +1852,25 @@ So now Q is proved to be true with respect to all relies, from now on, Q can be 
 
 ##### after 12 (ob.f, GREY, BLACK)
 
-Q is not taken into consideration, since it's proved to be correct under all relies
+	// Q is not taken into consideration, since it's been proved to be correct
 
 	H:	Q && ob.f |-> o'' || (o'' ∈ GREY U BLACK && (∃v· ob.f |-> v && v ∈ GREY U BLACK))
 
-*	(6) change phase[t], independent
+*	Phase_rely_C: change phase[t], independent
+
 *	UpdateResting:
 
 		H&P:	{stageC ∈ {RESTING, CLEAR_OR_MARKING} && stageC = Tracing} == false
 
-*	(12)
+*	UpdateS1:
 
 		H&P:	{phase[t] = Sync1 && ∀t· phase[t] = phaseC = Async} == false
 
-*	(13)
+*	UpdateS2:
 
 		H&P:	{phase[t] = Sync2 && ∀t· phase[t] = phaseC = Async} == false
 
-*	(14)
+*	UpdateTracing:
 
 		H&P:	{ob, v'} ⊆ reachables(roots[t])
 			&&	{v'} ⊆ GREY U BLACK
@@ -1884,35 +1887,36 @@ Q is not taken into consideration, since it's proved to be correct under all rel
 		
 	sp => H? success
 
-*	(15) only add object into GREY, those already in GREY are not affected
-*	(19) change phase[t], independent
-*	(25) change register & roots[t], independent
-*	(26)
+*	MarkGrey: only add object into GREY, those already in GREY are not affected
+*	PhaseS2: change phase[t], independent
+*	LoadWhite, LoadBlack: change register & roots[t], independent
+*	NewWhite:
 
 		H&P:	{(phase[t] ≠ Async || stageC = CLEAR_OR_MARKING) && (∀t·phase[t] = Async && stageC = Tracing)} == false
 
-*	(27) set obj's color to BLACK, those already in BLACK are not affected
-*	(31) change bucket[t], independent
+*	NewBlack: set obj's color to BLACK, those already in BLACK are not affected
+*	Bucket_rely_C: change bucket[t], independent
 
 
 ##### after 13 (ob.j, GREY, BLACK, o''.color)
 
 	H:	Q && (ob.f |-> o'' || o'' ∈ GREY && (∃v· ob.f |-> v && v ∈ GREY U BLACK)) && o''.color = WHITE
 
-*	(6) change phase[t], independent
+*	Phase_rely_C: change phase[t], independent
+
 *	UpdateResting:
 
 		H&P:	{stageC ∈ {RESTING, CLEAR_OR_MARKING} && stageC = Tracing} == false
 
-*	(12)
+*	UpdateS1:
 
 		H&P:	{phase[t] = Sync1 && ∀t· phase[t] = phaseC = Async} == false
 
-*	(13)
+*	UpdateS2:
 
 		H&P:	{phase[t] = Sync2 && ∀t· phase[t] = phaseC = Async} == false
 
-*	(14)
+*	UpdateTracing:
 
 		H&P:	{ob, v'} ⊆ reachables(roots[t])
 			&&	{v'} ⊆ GREY U BLACK
@@ -1930,34 +1934,35 @@ Q is not taken into consideration, since it's proved to be correct under all rel
 
 	sp => H? success
 
-*	(15) only add object into GREY, those already in GREY are not affected
-*	(19) change phase[t], independent
-*	(25) change register & roots[t], independent
-*	(26)(27)
+*	MarkGrey: only add object into GREY, those already in GREY are not affected
+*	PhaseS2: change phase[t], independent
+*	LoadWhite, LoadBlack: change register & roots[t], independent
+*	NewWhite, NewBlack
 
 		H&P:	{o''.color = WHITE && o''.color == BLUE && ..} == false
 
-*	(31) change bucket[t], independent
+*	Bucket_rely_C: change bucket[t], independent
 
 
 ##### after 14 (ob.f, GREY, BLACK, o''.color)
 
 	H:	Q && (ob.f |-> o'' || (∃v· ob.f |-> v && v ∈ GREY U BLACK)) && o''.color = WHITE && o'' ∈ GREY
 
-*	(6) change phase[t], independent
+*	Phase_rely_C: change phase[t], independent
+
 *	UpdateResting:
 
 		H&P:	{stageC ∈ {RESTING, CLEAR_OR_MARKING} && stageC = Tracing} == false
 
-*	(12)
+*	UpdateS1:
 
 		H&P:	{phase[t] = Sync1 && ∀t· phase[t] = phaseC = Async} == false
 
-*	(13)
+*	UpdateS2:
 
 		H&P:	{phase[t] = Sync2 && ∀t· phase[t] = phaseC = Async} == false
 
-*	(14)
+*	UpdateTracing:
 
 		H&P:	{ob, v'} ⊆ reachables(roots[t])
 			&&	{v'} ⊆ GREY U BLACK
@@ -1977,34 +1982,35 @@ Q is not taken into consideration, since it's proved to be correct under all rel
 
 	sp => H? success
 
-*	(15) only add object into GREY, those already in GREY are not affected
-*	(19) change phase[t], independent
-*	(25) change register & roots[t], independent
-*	(26)(27)
+*	MarkGrey: only add object into GREY, those already in GREY are not affected
+*	PhaseS2: change phase[t], independent
+*	LoadWhite, LoadBlack: change register & roots[t], independent
+*	NewWhite, NewBlack:
 
 		H&P:	{o''.color = WHITE && o''.color = BLUE && ..} == false
 
-*	(31) change bucket[t], independent
+*	Bucket_rely_C: change bucket[t], independent
 
 
 ##### after 15 (ob.f, GREY, BLACK)
 
 	H:	S && (∀ v ∈ Obj, f ∈ fields(ob)· ob.f |-> v => v ∈ BLACK U GREY) △= R
 
-*	(6) change phase[t], independent
+*	Phase_rely_C: change phase[t], independent
+
 *	UpdateResting:
 
 		H&P:	{stageC ∈ {RESTING, CLEAR_OR_MARKING} && stageC = Tracing} == false
 
-*	(12)
+*	UpdateS1:
 
 		H&P:	{phase[t] = Sync1 && ∀t· phase[t] = phaseC = Async} == false
 
-*	(13)
+*	UpdateS2:
 
 		H&P:	{phase[t] = Sync2 && ∀t· phase[t] = phaseC = Async} == false
 
-*	(14)
+*	UpdateTracing:
 
 		H&P:	{ob, v'} ⊆ reachables(roots[t])
 			&&	{v'} ⊆ GREY U BLACK
@@ -2020,15 +2026,15 @@ Q is not taken into consideration, since it's proved to be correct under all rel
 
 	sp => H? success
 
-*	(15) only add object into GREY, those already in GREY are not affected
-*	(19) change phase[t], independent
-*	(25) change register & roots[t], independent
-*	(26)
+*	MarkGrey: only add object into GREY, those already in GREY are not affected
+*	PhaseS2: change phase[t], independent
+*	LoadWhite, LoadBlack: change register & roots[t], independent
+*	NewWhite:
 
 		H&P:	{(phase[t] ≠ Async || stageC = CLEAR_OR_MARKING) && (∀t·phase[t] = Async && stageC = Tracing)} == false
 
-*	(27) set obj's color to BLACK, those already in BLACK are not affected
-*	(31) change bucket[t], independent
+*	NewBlack: set obj's color to BLACK, those already in BLACK are not affected
+*	Bucket_rely_C: change bucket[t], independent
 
 Therefore R is proved with respect to all relies, from now on, R can be used without checking again.
 
@@ -2037,33 +2043,33 @@ Therefore R is proved with respect to all relies, from now on, R can be used wit
 
 	H:	R && ob.color = BLACK
 
-*	(6) change phase[t], independent
-*	UpdateResting:..(14) change ob.f, independent
-*	(15) change GREY, independent
-*	(19) change phase[t], independent
-*	(25) change register & roots[t], independent
-*	(26)(27)
+*	Phase_rely_C: change phase[t], independent
+*	UpdateResting, UpdateS1, UpdateS2, UpdateTracing: change ob.f, independent
+*	MarkGrey: change GREY, independent
+*	PhaseS2: change phase[t], independent
+*	LoadWhite, LoadBlack: change register & roots[t], independent
+*	NewWhite, NewBlack:
 
 		H&P:	{ob.color = BLACK && ob.color = BLUE} == false
 
-*	(31) change bucket[t], independent
+*	Bucket_rely_C: change bucket[t], independent
 
 
 ##### after 18 (BLACK, reachables(), GREY, bucket[C])
 
 	H:	S && X ⊆ BLACK && reachables(Y) ⊆ reachables(GREY) U BLACK && bucket[C] ≠ ∅
 
-*	(6) change phase[t], independent
-*	UpdateResting:..(14) here X and Y are local variables, setting ob.f won't change them, thus independent
-*	(15) only add object into GREY, those already in GREY are not affected
-*	(19) change phase[t], independent
-*	(25) change register & roots[t], independent
-*	(26)
+*	Phase_rely_C: change phase[t], independent
+*	UpdateResting, UpdateS1, UpdateS2, UpdateTracing: here X and Y are local variables, setting ob.f won't change them, thus independent
+*	MarkGrey: only add object into GREY, those already in GREY are not affected
+*	PhaseS2: change phase[t], independent
+*	LoadWhite, LoadBlack: change register & roots[t], independent
+*	NewWhite:
 
 		H&P:	{(phase[t] ≠ Async || stageC = CLEAR_OR_MARKING) && (∀t·phase[t] = Async && stageC = Tracing)} == false
 
-*	(27) set obj's color to BLACK, those already in BLACK are not affected
-*	(31) change bucket[t], independent
+*	NewBlack: set obj's color to BLACK, those already in BLACK are not affected
+*	Bucket_rely_C: change bucket[t], independent
 
 -----
 
