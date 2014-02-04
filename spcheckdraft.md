@@ -27,6 +27,43 @@ in the form of Precondition & Command
 
 ##### relies for mutator thread
 
+-----
+// for copying
+
+Phase_rely_t
+
+Phase_rely_t'
+
+UpdateResting
+
+UpdateS1
+
+UpdateS2
+
+UpdateTracing
+
+MarkGrey
+
+MarkBlack
+
+RemoveGrey
+
+PhaseS2
+
+LoadWhite
+
+LoadBlack
+
+NewWhite
+
+NewBlack
+
+Bucket_rely_t
+
+Bucket_rely_t'
+
+-----
+
 **TODO** rewrite the text numbers
 
 *	**Phase_rely_t**, on collector thread, NO.(three) in .tex, former (3)
@@ -112,6 +149,8 @@ in the form of Precondition & Command
 			lastRead[t'] = v + n
 
 
+
+
 ##### relies for collector thread (duplication are not written again)
 
 All the relies for collector thread happened on one mutator thread t.
@@ -130,6 +169,35 @@ All the relies for collector thread happened on one mutator thread t.
 *	**NewBlack**, NO.(twentynine), former (27)
 
 *	**Bucket_rely_C**, NO.(thirtythree), same as **Bucket_rely_t'**.
+
+-----
+// for copying
+
+Phase_rely_C
+
+UpdateResting
+
+UpdateS1
+
+UpdateS2
+
+UpdateTracing
+
+MarkGrey
+
+PhaseS2
+
+LoadWhite
+
+LoadBlack
+
+NewWhite
+
+NewBlack
+
+Bucket_rely_C
+
+-----
 
 -----
 
