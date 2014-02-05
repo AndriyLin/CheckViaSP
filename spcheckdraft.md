@@ -1140,20 +1140,9 @@ similar to "PRE", except that the value of phase[t] and phase is different. The 
 *	RemoveGrey: change GREY, independent
 *	PhaseS2: change phase[t], independent
 
+
 *	LoadWhite: **TODO** failed to withstand?
 *	LoadBlack: **TODO**
-
-*	**LoadWhite**, on another mutator thread, NO.(twentysix), no former
-
-		{r0 = o && r1 = o' && f ∈ fields(o) && [o' + f] |-> o'' && {o, o'} ⊆ roots[t] = R && o''.color = WHITE && (phase[t] = Async => o'' ∈ reachables(GREY))}
-			r0 = o'' && roots[t] = R (-) {o} (+) {o''}
-
-*	**LoadBlack**, on another mutator thread, NO.(twentyseven), no former
-
-		{r0 = o && r1 = o' && f ∈ fields(o) && [o' + f] |-> o'' && {o, o'} ⊆ roots[t] = R && o''.color = BLACK}
-			r0 = o'' && roots[t] = R (-) {o} (+) {o''}
-
-
 
 
 *	NewWhite, NewBlack: change freelist & o.color, independent
