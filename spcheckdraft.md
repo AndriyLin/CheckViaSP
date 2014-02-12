@@ -99,12 +99,12 @@ in the form of Precondition & Command
 		{phaseC = Async && roots[t] ⊆ GREY && phase[t] = Sync2}
 			phase[t] = Async
 
-*	**LoadWhite**, on another mutator thread, NO.(26) in .tex
+*	**LoadWhite**, on another mutator thread, modifying itself's roots, NO.(26) in .tex
 
 		{r0 = o && r1 = o' && f ∈ fields(o) && [o' + f] |-> o'' && {o, o'} ⊆ roots[t] = R && o''.color = WHITE && (phase[t] = Async => o'' ∈ reachables(GREY))}
 			r0 = o'' && roots[t] = R (-) {o} (+) {o''}
 
-*	**LoadBlack**, on another mutator thread, NO.(27) in .tex
+*	**LoadBlack**, on another mutator thread, modifying itself's roots, NO.(27) in .tex
 
 		{r0 = o && r1 = o' && f ∈ fields(o) && [o' + f] |-> o'' && {o, o'} ⊆ roots[t] = R && o''.color = BLACK}
 			r0 = o'' && roots[t] = R (-) {o} (+) {o''}
@@ -1139,12 +1139,7 @@ similar to "PRE", except that the value of phase[t] and phase is different. The 
 *	MarkBlack: change o.color, independent
 *	RemoveGrey: change GREY, independent
 *	PhaseS2: change phase[t], independent
-
-
-*	LoadWhite: **TODO** failed to withstand?
-*	LoadBlack: **TODO**
-
-
+*	LoadWhite, LoadBlack: other thread won't modify the roots[t] of current thread
 *	NewWhite, NewBlack: change freelist & o.color, independent
 *	Bucket_rely_t: change lastRead[t], independent
 *	Bucket_rely_t': change lastWrite[t'] of another mutator thread, independent
