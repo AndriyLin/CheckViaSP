@@ -15,8 +15,6 @@
 
 **Notes**:
 
-When I started proving, I commented out all the text in the .tex file and used that number order for each invariant/rely/guarantee. However, it seems that the number order is a little different with text on..
-
 Only those assertions written in the .tex file are proved.
 
 -----
@@ -417,7 +415,7 @@ These three can only modified in collector thread, therefore there is indeed no 
 			o ∈ reachables(roots[t])
 		&&	o.color = WHITE
 		&&	o ∉ GREY
-			=>
+		=>
 			phase[t] ≠ Async 
 		||	stageC = CLEAR_OR_MARKING
 		||	(∃o' ∈ GREY/BLACK· o ∈ reachables(o'))
@@ -1182,21 +1180,71 @@ similar to "PRE", except that the value of phase[t] and phase is different. The 
 
 *	UpdateTracing:
 
-		H&P:	stageC = Tracing
-			&&	{v', x} ⊆ reachables(roots[t])
-			&&	{v'} ⊆ GREY U BLACK
-			&&	(x.f |-> old && old ∈ GREY U BLACK || ∃w· x.f |-> w && w ∈ GREY U BLACK)
-		C:		x.f |-> v'
+	_picked as the example for disjoint case_
 
-		sp = ∃y·{
-			x.f |-> v'
-		&&	stageC = Tracing
-		&&	{v', x} ⊆ reachables(roots[t])
-		&&	{v', old} ⊆ GREY U BLACK
-		&&	(y |-> old && old ∈ GREY U BLACK || ∃w· y |-> w && w ∈ GREY U BLACK)
+	H (Update(), after 3):
+	
+		phase[t] = Sync2 || stageC = TRACING
+   		=>
+   		x.f |-> old || (∃w · x.f |-> w && w ∈ GREY U BLACK)
+
+	P (precondition of UpdateTracing):
+
+			phase[t] = ASYNCH
+		&&	stageC ∈ {TRACING, SWEEPING}
+		&&	{o, v} ⊆ reachables(roots[t])
+		&&	{v, o'} ⊆ GREY U BLACK
+		&&	o.f |-> o'
+
+	C (command of UpdateTracing):
+
+		o.f |-> v
+
+	Case 1: "x" is the "o" in the rely.
+
+		H&P:	stageC = TRACING
+			&&	phase[t] = ASYNCH
+			&&	{x, v} ⊆ reachables(roots[t])
+			&&	{v, o'} ⊆ GREY U BLACK
+			&&	x.f |-> o'
+			&&	(x.f |-> old && old ∈ GREY U BLACK || ∃w · x.f |-> w && w ∈ GREY U BLACK)
+
+		C:	x.f |-> v
+		
+		sp = ∃ y · {
+			x.f |-> v
+		&&	stageC = TRACING
+		&&	phase[t] = ASYNCH
+		&&	{x, v} ⊆ reachables(roots[t])
+		&&	{v, o'} ⊆ GREY U BLACK
+		&&	y |-> o'
+		&&	(y |-> old && old ∈ GREY U BLACK || ∃w · y |-> w && w ∈ GREY U BLACK)
 		}
 
-	sp => H? success
+	sp => H? success. (v ∈ GREY U BLACK)
+
+	Case 2: "x" is not the "o" in the rely.
+
+		H&P:	stageC = TRACING
+			&&	phase[t] = ASYNCH
+			&&	{v, o} ⊆ reachables(roots[t])
+			&&	{v, o'} ⊆ GREY U BLACK
+			&&	o.f |-> o'
+			&&	(x.f |-> old || ∃w · x.f |-> w && w ∈ GREY U BLACK)
+
+		C:	o.f |->	v
+
+		sp = ∃ y · {
+			o.f |-> v
+		&&	stageC = TRACING
+		&&	phase[t] = ASYNCH
+		&&	{v, o} ⊆ reachables(roots[t])
+		&&	{v, o'} ⊆ GREY U BLACK
+		&&	y |-> o'
+		&&	(x.f |-> old || ∃w · x.f |-> w && w ∈ GREY U BLACK)
+		}
+
+	sp => H? success.
 
 *	MarkGrey: only increase set GREY, those already in GREY are not affected
 *	MarkBlack: only set an obj to BLACK, those already in GREY U BLACK are not affected
@@ -1325,7 +1373,7 @@ similar to "PRE", except that the value of phase[t] and phase is different. The 
 
 *	RemoveGrey:
 
-		// both "old" and "w" can be the object o in (17), thus consider them twice
+		// both "old" and "w" can be the object o in RemoveGrey, thus consider them twice
 
 		H&P_1:	stageC = Tracing
 			&&	∀t·phase[t] = phaseC = Async
