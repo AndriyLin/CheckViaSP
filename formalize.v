@@ -26,75 +26,61 @@ Fixpoint ble_nat (n m : nat) : bool :=
 
 
 (* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% *)
-
+(* TODOs:
+ * 1. var can only bind an arithmatic expression for now. Extend to bexp, then to all exp.
+ * 2. I want aexp & bexp to inherit from one exp, how?
+ * 3. Add fold_constants and optimize_0plus for aexp/bexp??
+ * 4. Add the index for array into var??
+ *)
 
 Inductive var : Type :=
-(* TODO bind a string in the future *)
   Var: nat -> var.
 
 Definition X : var := Var 0.
 Definition Y : var := Var 1.
 Definition Z : var := Var 2.
 
+(* state: the current memory map. Given one variable name, return its value or not found *)
+Definition state := var -> option nat.
+Definition empty_state : state :=
+  fun _ => None.
 
-(* context is the current memory, given one variable name, return its value or not found *)
-Definition ctx := var -> option nat.
-Definition ctx_null : ctx :=
-  fun n => None.
-
-Definition ctx_update (c : ctx) (v : var) (val : nat) : ctx :=
+Definition state_update (st : state) (v : var) (val : nat) : state :=
   fun x => match x, v with
              | Var xid, Var vid => if beq_nat xid vid
                                    then Some val
-                                   else c x
+                                   else st x
            end.
 
+(* arithmatic expression *)
 Inductive aexp : Type :=
   ANum: nat -> aexp
 | APlus: aexp -> aexp -> aexp
-(* I can't have ANeg because nat is always >= 0 *)
 | AMinus: aexp -> aexp -> aexp
 | AMult: aexp -> aexp -> aexp
-(* Now var can only refer to arithmatic exp *)
 | AVar: var -> aexp.
 
-Fixpoint aeval (c : ctx) (ae : aexp) : option nat :=
+Fixpoint aeval (st : state) (ae : aexp) : option nat :=
   match ae with
     | ANum n => Some n
-    | APlus a1 a2 => let r1 := (aeval c a1) in
-                     match r1 with
-                       | None => None
-                       | Some r1' => let r2 := (aeval c a2) in
-                                     match r2 with
-                                       | None => None
-                                       | Some r2' => Some (r1' + r2')
-                                     end
+    | APlus a1 a2 => match aeval st a1, aeval st a2 with
+                       | Some r1, Some r2 => Some (r1 + r2)
+                       | _, _ => None
                      end
-    | AMinus a1 a2 => let r1 := (aeval c a1) in
-                      match r1 with
-                        | None => None
-                        | Some r1' => let r2 := (aeval c a2) in
-                                      match r2 with
-                                        | None => None
-                                        | Some r2' => Some (r1' - r2')
-                                      end
-                      end
-    | AMult a1 a2 => let r1 := (aeval c a1) in
-                     match r1 with
-                       | None => None
-                       | Some r1' => let r2 := (aeval c a2) in
-                                     match r2 with
-                                       | None => None
-                                       | Some r2' => Some (r1' * r2')
-                                     end
+    | AMinus a1 a2 => match aeval st a1, aeval st a2 with
+                       | Some r1, Some r2 => Some (r1 - r2)
+                       | _, _ => None
                      end
-    | AVar id => c id
+    | AMult a1 a2 => match aeval st a1, aeval st a2 with
+                       | Some r1, Some r2 => Some (r1 * r2)
+                       | _, _ => None
+                     end
+    | AVar id => st id
   end.
 
-(* TODO I want to make aexp and bexp inherit the same "exp", how? *)
-
+(* boolean expression *)
 Inductive bexp : Type :=
-  BTrue: bexp (* TODO why do I need these two, cannot directly use true & false?? *)
+  BTrue: bexp
 | BFalse: bexp
 | BNot: bexp -> bexp
 | BAnd: bexp -> bexp -> bexp
@@ -102,57 +88,36 @@ Inductive bexp : Type :=
 | BEq: aexp -> aexp -> bexp
 | BLe: aexp -> aexp -> bexp.
 
-Fixpoint beval (c : ctx) (be : bexp) : option bool :=
+Fixpoint beval (st : state) (be : bexp) : option bool :=
   match be with
     | BTrue => Some true
     | BFalse => Some false
-    | BNot b => let r := beval c b in
-                match r with
+    | BNot b => match beval st b with
                   | None => None
-                  | Some r' => Some (negb r')
+                  | Some r => Some (negb r)
                 end
-    | BAnd b1 b2 => let r1 := beval c b1 in
-                    match r1 with
-                      | None => None
-                      | Some r1' => let r2 := beval c b2 in
-                                    match r2 with
-                                      | None => None
-                                      | Some r2' => Some (andb r1' r2')
-                                    end
+    | BAnd b1 b2 => match beval st b1, beval st b2 with
+                      | Some r1, Some r2 => Some (andb r1 r2)
+                      | _, _ => None
                     end
-    | BOr b1 b2 => let r1 := beval c b1 in
-                   match r1 with
-                     | None => None
-                     | Some r1' => let r2 := beval c b2 in
-                                   match r2 with
-                                     | None => None
-                                     | Some r2' => Some (orb r1' r2')
-                                   end
+    | BOr b1 b2 => match beval st b1, beval st b2 with
+                     | Some r1, Some r2 => Some (orb r1 r2)
+                     | _, _ => None
                    end
-    | BEq a1 a2 => let r1 := aeval c a1 in
-                   match r1 with
-                     | None => None
-                     | Some r1' => let r2 := aeval c a2 in
-                                   match r2 with
-                                     | None => None
-                                     | Some r2' => Some (beq_nat r1' r2')
-                                   end
+    | BEq a1 a2 => match aeval st a1, aeval st a2 with
+                     | Some r1, Some r2 => Some (beq_nat r1 r2)
+                     | _, _ => None
                    end
-    | BLe a1 a2 => let r1 := aeval c a1 in
-                   match r1 with
-                     | None => None
-                     | Some r1' => let r2 := aeval c a2 in
-                                   match r2 with
-                                     | None => None
-                                     | Some r2' => Some (ble_nat r1' r2')
-                                   end
+    | BLe a1 a2 => match aeval st a1, aeval st a2 with
+                     | Some r1, Some r2 => Some (ble_nat r1 r2)
+                     | _, _ => None
                    end
   end.
 
-
+(* command *)
 Inductive cmd : Type :=
   CSkip: cmd
-| CAssi: var -> aexp -> cmd (* I want it to be natexp or boolexp or strexp, how? *)
+| CAssi: var -> aexp -> cmd
 | CSeq: cmd -> cmd -> cmd
 | CIf: bexp -> cmd -> cmd -> cmd
 | CWhile: bexp -> cmd -> cmd.
@@ -179,12 +144,12 @@ Example test2 : cmd :=
 
 Reserved Notation "c1 '/' st '||' st'" (at level 40, st at level 39).
 
-Inductive ceval : cmd -> ctx -> ctx -> Prop :=
+Inductive ceval : cmd -> state -> state -> Prop :=
 | ESkip: forall st,
            SKIP / st || st
 | EAssi: forall st a e n,
            aeval st e = Some n ->
-           (a ::= e) / st || (ctx_update st a n)
+           (a ::= e) / st || (state_update st a n)
 | ESeq: forall st st1 st2 c1 c2,
           c1 / st || st1 ->
           c2 / st1 || st2 ->
@@ -209,14 +174,7 @@ Inductive ceval : cmd -> ctx -> ctx -> Prop :=
 where "c1 '/' st '||' st'" := (ceval c1 st st').
 
 
-(* temporary, just to have a type named string, because I don't know to represent string here. *)
-Definition string := nat.
-
-
-Inductive var : Set :=
-  var_name : string -> var (* e.g. phaseC *)
-| var_index : var -> var -> var. (* e.g. phase[t] *)
-
+(* TODO start from here *)
 
 (* like ASYNCH, BLACK, TRACING and such such *)
 Definition value := nat.
@@ -236,7 +194,6 @@ Inductive assertion : Set :=
 | as_exists: var -> assertion -> assertion
 | as_forall: var -> assertion -> assertion.
 
-Definition code : Set := string.
 
 Inductive relyprod : Type :=
   (* precondition & command *)
