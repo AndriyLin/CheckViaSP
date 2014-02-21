@@ -31,6 +31,7 @@ Fixpoint ble_nat (n m : nat) : bool :=
  * 2. I want aexp & bexp to inherit from one exp, how?
  * 3. Add fold_constants and optimize_0plus for aexp/bexp??
  * 4. Add the index for array into var??
+ * 5. return option nat brings extra troubles.
  *)
 
 Inductive var : Type :=
@@ -45,6 +46,7 @@ Definition state := var -> option nat.
 Definition empty_state : state :=
   fun _ => None.
 
+(* TODO make val a option nat?? *)
 Definition state_update (st : state) (v : var) (val : nat) : state :=
   fun x => match x, v with
              | Var xid, Var vid => if beq_nat xid vid
@@ -174,38 +176,153 @@ Inductive ceval : cmd -> state -> state -> Prop :=
 where "c1 '/' st '||' st'" := (ceval c1 st st').
 
 
+Definition assertion := state -> Prop.
+
+(* TODO now that state gives back an "option nat", it becomes incovenient?
+Definition as1 : assertion := fun st => st X < 1 /\ st Y < 2.
+*)
+
+Definition assertion_imply (P Q : assertion) : Prop :=
+  forall st, P st -> Q st.
+
+Notation "P ->> Q" := (assertion_imply P Q) (at level 80).
+Notation "P <<->> Q" := (P ->> Q /\ Q ->> P) (at level 80).
+
+
+Definition hoare_triple (P : assertion) (c : cmd) (Q : assertion) : Prop :=
+  forall st st',
+    c / st || st' ->
+    P st ->
+    Q st'.
+
+Notation "{{ P }}  c  {{ Q }}" := (hoare_triple P c Q) (at level 90, c at next level).
+
+
+(* Followed by the hoare rules *)
+
+Theorem hoare_skip : forall P,
+     {{P}} SKIP {{P}}.
+Proof.
+  intros P st st' H HP. inversion H. subst.
+  assumption.  Qed.
+
+
+Definition assertion_sub X a P : assertion :=
+  fun (st : state) =>
+    P (state_update st X (aeval st a)).
+
+Notation "P [ X |-> a ]" := (assn_sub X a P) (at level 10).
+
+Theorem hoare_asgn : forall Q X a,
+  {{Q [X |-> a]}} (X ::= a) {{Q}}.
+Proof.
+  unfold hoare_triple.
+  intros Q X a st st' HE HQ.
+  inversion HE. subst.
+  unfold assn_sub in HQ. assumption.  Qed.
+
+
+Theorem hoare_consequence_pre : forall (P P' Q : Assertion) c,
+  {{P'}} c {{Q}} ->
+  P ->> P' ->
+  {{P}} c {{Q}}.
+Proof.
+  intros P P' Q c Hhoare Himp.
+  intros st st' Hc HP. apply (Hhoare st st'). 
+  assumption. apply Himp. assumption. Qed.
+
+Theorem hoare_consequence_post : forall (P Q Q' : Assertion) c,
+  {{P}} c {{Q'}} ->
+  Q' ->> Q ->
+  {{P}} c {{Q}}.
+Proof.
+  intros P Q Q' c Hhoare Himp.
+  intros st st' Hc HP. 
+  apply Himp.
+  apply (Hhoare st st'). 
+  assumption. assumption. Qed.
+
+
+Theorem hoare_seq : forall P Q R c1 c2,
+     {{Q}} c2 {{R}} ->
+     {{P}} c1 {{Q}} ->
+     {{P}} c1;;c2 {{R}}.
+Proof.
+  intros P Q R c1 c2 H1 H2 st st' H12 Pre.
+  inversion H12; subst.
+  apply (H1 st'0 st'); try assumption.
+  apply (H2 st st'0); assumption. Qed.
+
+
+Definition bassn b : Assertion :=
+  fun st => (beval st b = true).
+
+Lemma bexp_eval_true : forall b st,
+  beval st b = true -> (bassn b) st.
+Proof.
+  intros b st Hbe.
+  unfold bassn. assumption.  Qed.
+
+Lemma bexp_eval_false : forall b st,
+  beval st b = false -> ~ ((bassn b) st).
+Proof.
+  intros b st Hbe contra.
+  unfold bassn in contra.
+  rewrite -> contra in Hbe. inversion Hbe.  Qed.
+
+Theorem hoare_if : forall P Q b c1 c2,
+  {{fun st => P st /\ bassn b st}} c1 {{Q}} ->
+  {{fun st => P st /\ ~(bassn b st)}} c2 {{Q}} ->
+  {{P}} (IFB b THEN c1 ELSE c2 FI) {{Q}}.
+Proof.
+  intros P Q b c1 c2 HTrue HFalse st st' HE HP.
+  inversion HE; subst. 
+  Case "b is true".
+    apply (HTrue st st'). 
+      assumption. 
+      split. assumption. 
+             apply bexp_eval_true. assumption.
+  Case "b is false".
+    apply (HFalse st st'). 
+      assumption. 
+      split. assumption.
+             apply bexp_eval_false. assumption. Qed.
+
+
+Lemma hoare_while : forall P b c,
+  {{fun st => P st /\ bassn b st}} c {{P}} ->
+  {{P}} WHILE b DO c END {{fun st => P st /\ ~ (bassn b st)}}.
+Proof.
+  intros P b c Hhoare st st' He HP.
+  (* Like we've seen before, we need to reason by induction 
+     on He, because, in the "keep looping" case, its hypotheses 
+     talk about the whole loop instead of just c *)
+  remember (WHILE b DO c END) as wcom eqn:Heqwcom.
+  ceval_cases (induction He) Case;
+    try (inversion Heqwcom); subst; clear Heqwcom.
+
+  Case "E_WhileEnd".
+    split. assumption. apply bexp_eval_false. assumption.
+
+  Case "E_WhileLoop".
+    apply IHHe2. reflexivity.
+    apply (Hhoare st st'). assumption.
+      split. assumption. apply bexp_eval_true. assumption.
+Qed.
+
 (* TODO start from here *)
 
-(* like ASYNCH, BLACK, TRACING and such such *)
-Definition value := nat.
-
-(* e.g. {BLACK, GREY} *)
-Definition collection := list value.
 
 
-Inductive assertion : Set :=
-  as_and: assertion -> assertion -> assertion
-| as_or: assertion -> assertion -> assertion
-| as_imply: assertion -> assertion -> assertion
-| as_equal: var -> value -> assertion
-| as_uneq: var -> value -> assertion
-| as_in: var -> collection -> assertion
-| as_subset: collection -> collection -> assertion
-| as_exists: var -> assertion -> assertion
-| as_forall: var -> assertion -> assertion.
-
+(* For strongest postcondition, resume later *)
 
 Inductive relyprod : Type :=
   (* precondition & command *)
   rely : assertion -> code -> relyprod.
 
 
-Fixpoint sp_gen (a : assertion) (c : code) : assertion :=
+Fixpoint sp_gen (a : assertion) (c : cmd) : assertion :=
   admit.
-
-Fixpoint implies (a1 a2 : assertion) : bool :=
-  admit.
-
 
 Definition sp_check (a : assertion)(r : relyprod) : bool :=
   match r with
