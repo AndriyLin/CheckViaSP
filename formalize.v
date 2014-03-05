@@ -41,7 +41,10 @@ Definition X : var := Var 0.
 Definition Y : var := Var 1.
 Definition Z : var := Var 2.
 
-(* state: the current memory map. Given one variable name, return its value or not found *)
+(* state: the current memory map. Given one variable name, return its value or not found
+option monad
+maybe monad in coq
+ *)
 Definition state := var -> option nat.
 Definition empty_state : state :=
   fun _ => None.
@@ -178,9 +181,8 @@ where "c1 '/' st '||' st'" := (ceval c1 st st').
 
 Definition assertion := state -> Prop.
 
-(* TODO now that state gives back an "option nat", it becomes incovenient?
+(* TODO now that state gives back an "option nat", it becomes incovenient? *)
 Definition as1 : assertion := fun st => st X < 1 /\ st Y < 2.
-*)
 
 Definition assertion_imply (P Q : assertion) : Prop :=
   forall st, P st -> Q st.
