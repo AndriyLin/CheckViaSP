@@ -1,0 +1,250 @@
+\documentclass[12pt, fleqn]{article}
+
+% for indentation in the first paragraph after a section title
+\usepackage{indentfirst}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{listings} % for code
+
+\DeclareMathOperator*{\SIGMA}{\Sigma}
+
+
+\pagestyle{fancy}
+\lhead{Try formalize}
+\chead{}
+\rhead{Xuankang Lin}
+
+\begin{document}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{TOY PL}
+
+\subsection{Arithmatic Expression}
+
+\begin{equation*}
+\begin{aligned}
+AE ::= \ &nat \\
+| \ &AE + AE \\
+| \ &AE - AE \\
+| \ &AE \times AE \\
+| \ &Var
+\end{aligned}
+\end{equation*}
+
+\subsection{Boolean Expression}
+
+\begin{equation*}
+\begin{aligned}
+BE ::= \ &True \\
+| \ &False \\
+| \ &\lnot BE \\
+| \ &BE \land BE \\
+| \ &BE \lor BE \\
+| \ &AE = AE \\
+| \ &AE \le AE
+\end{aligned}
+\end{equation*}
+
+\subsection{Command}
+
+\begin{equation*}
+\begin{aligned}
+CMD ::= \ &skip \\
+| \ &Var := AE \\
+| \ &CMD ; CMD \\
+| \ &$if $ BE $ then $ CMD $ else $ CMD $ end $ \\
+| \ &$while $ BE $ do $ CMD $ end $
+\end{aligned}
+\end{equation*}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Semantics}
+
+\subsection{Evaluation of Arithmatic Expression}
+\begin{itemize}
+\item % nat
+  $[[nat \ n]]_\sigma \triangleq n$
+\item % +
+  $[[a1 + a2]]_\sigma \triangleq [[a1]]_\sigma + [[a2]]_\sigma$
+\item % -
+  $[[a1 - a2]]_\sigma \triangleq [[a1]]_\sigma - [[a2]]_\sigma$
+\item % *
+  $[[a1 \times a2]]_\sigma \triangleq [[a1]]_\sigma \times [[a2]]_\sigma$
+\item % var
+  $[[var]]_\sigma \triangleq \sigma[var]$
+\end{itemize}
+
+
+\subsection{Evaluation of Boolean Expression}
+\begin{itemize}
+\item % tt
+  $[[True]]_\sigma \triangleq true$
+\item % ff
+  $[[False]]_\sigma \triangleq false$
+\item % not
+  $[[\lnot b]]_\sigma \triangleq \lnot [[b]]_\sigma$
+\item % and
+  $[[b1 \land b2]]_\sigma \triangleq [[b1]]_\sigma \land [[b2]]_\sigma$
+\item % or
+  $[[b1 \lor b2]]_\sigma \triangleq [[b1]]_\sigma \lor [[b2]]_\sigma$
+\item % eq
+  $[[a1 = a2]]_\sigma \triangleq [[a1]]_\sigma = [[a2]]_\sigma$
+\item % le
+  $[[a1 \le a2]]_\sigma \triangleq [[a1]]_\sigma \le [[a2]]_\sigma$
+\end{itemize}
+
+
+\subsection{Evaluation of Command}
+\begin{itemize}
+\item % skip
+  $skip, \sigma \rightarrow \sigma$
+
+\item % asgn
+  $var := aexp, \sigma \rightarrow \sigma[var := [[aexp]]_\sigma]$
+
+\item % seq
+  $c1, \sigma \rightarrow \sigma' \implies$\\
+  $c2, \sigma' \rightarrow \sigma'' \implies$\\
+  $c1; c2, \sigma \rightarrow \sigma''$
+
+\item % if_true
+  $[[b]]_\sigma = true \land c1, \sigma \rightarrow \sigma' \implies$\\
+  if $b$ then $c1$ else $c2$ end, $\sigma \rightarrow \sigma'$
+
+\item % if_false
+  $[[b]]_\sigma = false \land c2, \sigma \rightarrow \sigma' \implies$\\
+  if $b$ then $c1$ else $c2$ end, $\sigma \rightarrow \sigma'$
+
+\item % while_end
+  $[[b]]_\sigma = false \implies$\\
+  while $b$ do $c$ end, $\sigma \rightarrow \sigma$
+
+\item % while_loop
+  $[[b]]_\sigma = true \implies$\\
+  $c, \sigma \rightarrow \sigma' \implies$\\
+  while $b$ do $c$ end, $\sigma' \rightarrow \sigma'' \implies$\\
+  while $b$ do $c$ end, $\sigma \rightarrow \sigma''$
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Hoare Logic}
+
+Definition $assertion := state \rightarrow Prop$.
+
+$\sigma \models P$ means $P$ is true (holds) under state $\sigma$.
+
+$\{P \land b\} \triangleq \sigma \models P \land [[b]]_\sigma = true$.
+
+\bigskip
+
+implies: $[[P \rightarrow Q]]_\sigma \triangleq \sigma \models P \rightarrow \sigma \models Q$
+
+\bigskip
+
+hoare triple: $\{P\} c \{Q\} \triangleq \forall \sigma \ \sigma', [[P]]_\sigma \implies$
+$c, \sigma \rightarrow \sigma' \implies$
+$[[Q]]_{\sigma'}$
+
+\bigskip
+
+\textbf{Rules}:
+
+\begin{itemize}
+\item % skip
+  $\{P\} skip \{P\}$
+
+\item % asgn
+  $\{Q[var \leftarrow aexp]\} var := aexp \{Q\}$
+
+\item % seq
+  $\{Q\} c2 \{R\} \implies$ // note the order\\
+  $\{P\} c1 \{Q\} \implies$\\
+  $\{P\} c1; c2 \{R\}$
+
+\item % if
+  $\{P \land b\} c1 \{Q\} \implies$\\
+  $\{P \land \lnot b\} c2 \{Q\} \implies$\\
+  $\{P\}$ if $b$ then $c1$ else $c2$ end $\{Q\}$
+
+\item % while
+  $\{P \land b\} c \{P\} \implies$\\
+  $\{P\}$ while $b$ do $c$ end $\{P \land \lnot b\}$
+
+\item % consequence_pre
+  $\{P\} c \{Q\} \implies$\\
+  $P' \rightarrow P \implies$\\
+  $\{P'\} c \{Q\}$
+
+\item % consequence_post
+  $\{P\} c \{Q\} \implies$\\
+  $Q \rightarrow Q' \implies$\\
+  $\{P\} c \{Q'\}$
+\end{itemize}
+
+
+\subsection{weakest liberal precondition}
+
+is\_wlp $P \ c \ Q \triangleq \{P\} c \{Q\} \land \forall P', \{P'\} c \{Q\} \implies P' \rightarrow P$
+
+
+\subsection{strongest postcondition}
+
+is\_sp $P \ c \ Q \triangleq \{P\} c \{Q\} \land \forall Q', \{P\} c \{Q'\} \implies Q \rightarrow Q'$
+
+\bigskip
+
+\textbf{Rules}:
+\begin{itemize}
+\item % skip
+  $sp(P, skip) \triangleq P$
+
+\item % asgn
+  $sp(P, var := aexp) \triangleq \exists y, var := aexp[var \leftarrow y] \land P[var \leftarrow y]$\\
+  By $aexp[var \leftarrow y]$ I mean all the $var$ in $aexp$ are replaced by $y$, this can be implemented through a fixpoint function.
+
+\item[]
+  // followings are logic, not functions
+
+\item % seq
+  $sp(P, c1) = Q \implies$\\
+  $sp(Q, c2) = R \implies$\\
+  $sp(P, c1; c2) = R$
+
+\item % if
+  $sp(P \land b, c1) = Q \implies$\\
+  $sp(P \land \lnot b, c2) = Q \implies$\\
+  $sp(P,$ if $b$ then $c1$ else $c2$ end$) = Q$
+
+\item % while
+  $sp(P \land b, c) \rightarrow P \implies$\\
+  $sp(P,$ while $b$ do $c$ end$) = P \land \lnot b$
+
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Rely/Guarantee}
+
+Rely: (Precondition : assertion, command : C)
+
+\bigskip
+
+$stable(A, rely(P, c)) \triangleq \forall \sigma \ \sigma', (\sigma \models P \land A) \land (c, \sigma \rightarrow \sigma') \implies \sigma' \models A$
+
+// this is the semantics
+
+\bigskip
+
+$sp(A \land P, c) \rightarrow A \implies stable(A, rely(P, c))$
+
+// this is the theorem
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\end{document}
+
