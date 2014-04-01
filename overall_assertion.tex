@@ -39,8 +39,8 @@ Assuming the commands and assertions are stated as following:
 \subsection{Goal}
 
 Assuming we have an ``Overall Assertion'' $A$ which is related to all
-$P_i$ where $i \in [0, n]$, such that if $A$ is stable wrt. some rely,
-each $P_i$ will be stable wrt. that rely.
+$P_i$ where $i \in [0, n]$, such that if $A$ is stable w.r.t. some rely,
+each $P_i$ will be stable w.r.t. that rely.
 
 The property can be stated as the theorem below:
 
@@ -48,22 +48,22 @@ The property can be stated as the theorem below:
 \begin{aligned}
 $Theorem &Representative:$ \forall A \ P \ c,\\
 &A = $ ``Overall Assertion'' of all the assertions in code $ \rightarrow\\
-&A $ is stable wrt. $ Rely(P, c) \rightarrow\\
-&\forall $ assertion $ P_i $ in the code, $ P_i $ is stable wrt. $ Rely(P, c).
+&A $ is stable w.r.t. $ Rely(P, c) \rightarrow\\
+&\forall $ assertion $ P_i $ in the code, $ P_i $ is stable w.r.t. $ Rely(P, c).
 \end{aligned}
 \end{equation*}
 
 Checking stability using such an ``Overall Assertion'' $A$ would cost
 less time if it saves some work. For example:
 
-//TODO Give an example for this new method
+$P_0: \{ x = 0 \}, P_1: \{ x = 1 \}, P_2: \{ x = 2 \} .. P_n: \{ x = n \}, A: \{ 0 \le x \le n\}$. So in this case, stability check only needs to check $A$ for once, instead of checking $P_i$ for $n$ times.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsection{What if failed}
 
-But if $A$ is not stable wrt. some rely, it may still be the case that
-all assertion $P_i$ are stable wrt. that rely. This depends on how we
+But if $A$ is not stable w.r.t. some rely, it may still be the case that
+all assertion $P_i$ are stable w.r.t. that rely. This depends on how we
 generate $A$.
 
 \subsubsection{Without Relaxation}
@@ -76,8 +76,8 @@ assertion which will fail the stability check.
 \begin{aligned}
 $Theorem &NoRelaxation:$ \forall A \ P \ c,\\
 &A = $ ``Overall Assertion'' of all assertions in code without relaxation $ \rightarrow\\
-&A $ is not stable wrt. $ Rely(P, c) \rightarrow\\
-&\exists i, P_i $ is not stable wrt. $ Rely(P, c).
+&A $ is not stable w.r.t. $ Rely(P, c) \rightarrow\\
+&\exists i, P_i $ is not stable w.r.t. $ Rely(P, c).
 \end{aligned}
 \end{equation*}
 
@@ -96,17 +96,17 @@ $A$, so there is a tradeoff here.
 
 If $A$ is generated with some relaxation or generalization, then $A$'s
 failure of stability indicates nothing, it could still be the case
-that all assertions $P_i$ are stable wrt. the rely.
+that all assertions $P_i$ are stable w.r.t. the rely.
 
 A trivial counterexample for this is stated below:
 
 $P_0: \{ x = 0 \}$, $P_1: True$, $P_2: \{ x = 2 \}$. $A: \{ 0 \le x
 \le 2 \}$. Given a rely $r = Rely(\{ x = 1 \}, x := 100)$. Here $r$
-means that if the pre-condition $x = 1$ is satisfied, the command $x
-:= 100$ could be executed.
+means that if the pre-condition $\{x = 1\}$ is satisfied, the command
+$x := 100$ could be executed.
 
-In this case, $A$ is not stable wrt. $r$, but actually each assertion
-$P_i$ is stable wrt. $r$.
+In this case, $A$ is not stable w.r.t. $r$, but actually each assertion
+$P_i$ is stable w.r.t. $r$.
 
 The coarser the generation of $A$ is, the more likely that $A$ fails
 the stability check while all $P_i$ are indeed stable. Again, there is
@@ -128,8 +128,8 @@ $A_k$, their ``Overall Assertion'' $A'$ will also fail the stability
 check.
 
 Then we can eliminate those assertions for now and check other
-``benign'' assertions first. The failed ones can be checked one by
-one.
+``benign'' assertions first. The failed original assertions can be
+checked one by one.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -169,14 +169,14 @@ assertion &::=\\
 &| \ aexp \neq aexp\\
 &| \ aexp \le aexp\\
 &| \ aexp \ge aexp\\
-&| \ aexp |-> aexp\\
+&| \ aexp \mapsto aexp\\
 &| \ \{ .. \} \subseteq \{ .. \}\\
 &| \ aexp \in \{ .. \}\\
 \end{aligned}
 \end{equation*}
 
 One implementation (draft): $A$ is in the form of $A_1 \land A_2 \land
-.. \land A_k ..$ where each $A_i$ is an combined assertion wrt. one
+.. \land A_k ..$ where each $A_i$ is an combined assertion w.r.t. one
 variable.
 
 When a new assertion $P_i$ is to be combined into an ``Overall
@@ -184,13 +184,13 @@ Assertion'' $A$, if there is already some $A_k$ that deals with
 $P_i$'s concerning variable, generalize $A_k$ to make it also covers
 the case of $P_i$. Otherwise, $A = A \land P_i$.
 
-Example: $P_0: \{ x = 10 \}$, $P_1: \{ x = 11 \land y = 100\}$, $P_2: \{ y = 101 \land z = 1000 \}$. Then $A$ after each step may be:
+Example: $P_0: \{ x = 10 \}$, $P_1: \{ x = 11 \land y = 100\}$, $P_2: \{ y = 101 \land z = 1000 \}$. Then $A$ after each step is:
 
 \begin{itemize}
 \item Before combining $P_0$ (initially): $A: True$
 \item After combining $P_0$: $A: x = 10$
 \item After combining $P_1$: $A: 10 \le x \le 11 \land y = 100$
-\item After combining $P_2$ (final): $A: 10 \le x \le 11 \land 100 \le y \le 101 \land z = 1000 $
+\item After combining $P_2$ (finally): $A: 10 \le x \le 11 \land 100 \le y \le 101 \land z = 1000 $
 \end{itemize}
 
 // \textbf{TODO}, what if combining $x = 100$ and $x = 10 \lor y =
@@ -198,8 +198,8 @@ Example: $P_0: \{ x = 10 \}$, $P_1: \{ x = 11 \land y = 100\}$, $P_2: \{ y = 101
 
 \bigskip
 
-After $combine$, we generated a ``Overall Assertion'' $A$. $A$ should
-have the following property: $\forall$ assertion $P_i, P_i \implies
+After $combine$, we get a ``Overall Assertion'' $A$. $A$ should have
+the following property: $\forall$ assertion $P_i, P_i \implies
 A|_{P_i}$.  Here $A|_{P_i}$ represents those subparts in $A$ that are
 corresponding to $P_i$. e.g. $A: \{x > 10 \land y < 100\}, P_i: \{x =
 11\} \therefore A|_{P_i} = \{x > 10\}$.
@@ -249,7 +249,7 @@ So this paper may not be relevant to our idea.
 \bigskip
 
 This paper presents an algorithm which can generate the weakest
-(liberal) pre-conditions for some compiler optimizations wrt. some
+(liberal) pre-conditions for some compiler optimizations w.r.t. some
 template programs such that when the wlp are satisfied, the category
 of optimizations on these programs won't introduce new bugs.
 
@@ -313,7 +313,7 @@ This paper defines 6 predicate transformers which may be interesting:
   least one component satisfies X.
 \end{itemize}
 
-However, this papers is more like just presenting a model and talks
+However, this paper is more like just presenting a model and talks
 about its methodology, it is irrelevant to the things I am interested
 in -- rules for assertion combination.
 
