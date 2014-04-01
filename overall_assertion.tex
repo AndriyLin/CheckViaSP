@@ -1,0 +1,323 @@
+\documentclass[12pt, fleqn]{article}
+
+% for indentation in the first paragraph after a section title
+\usepackage{indentfirst}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{listings} % for code
+
+\DeclareMathOperator*{\SIGMA}{\Sigma}
+
+%\pagestyle{fancy}
+%\lhead{The ``new idea''}
+%\chead{}
+%\rhead{Xuankang Lin}
+
+\begin{document}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Assuming the commands and assertions are stated as following:
+
+\begin{lstlisting}
+    { P0: PRE }
+      c1
+    { P1 }
+      c2
+    { P2 }
+      ..
+    { Pn-1 }
+      cn
+    { Pn: POST }
+\end{lstlisting}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Using the ``Overall Assertion''}
+
+\subsection{Goal}
+
+Assuming we have an ``Overall Assertion'' $A$ which is related to all
+$P_i$ where $i \in [0, n]$, such that if $A$ is stable wrt. some rely,
+each $P_i$ will be stable wrt. that rely.
+
+The property can be stated as the theorem below:
+
+\begin{equation*}
+\begin{aligned}
+$Theorem &Representative:$ \forall A \ P \ c,\\
+&A = $ ``Overall Assertion'' of all the assertions in code $ \rightarrow\\
+&A $ is stable wrt. $ Rely(P, c) \rightarrow\\
+&\forall $ assertion $ P_i $ in the code, $ P_i $ is stable wrt. $ Rely(P, c).
+\end{aligned}
+\end{equation*}
+
+Checking stability using such an ``Overall Assertion'' $A$ would cost
+less time if it saves some work. For example:
+
+//TODO Give an example for this new method
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{What if failed}
+
+But if $A$ is not stable wrt. some rely, it may still be the case that
+all assertion $P_i$ are stable wrt. that rely. This depends on how we
+generate $A$.
+
+\subsubsection{Without Relaxation}
+
+If $A$ is generated without any relaxation or generalization, then
+$A$'s failure of stability should indicate that there is some
+assertion which will fail the stability check.
+
+\begin{equation*}
+\begin{aligned}
+$Theorem &NoRelaxation:$ \forall A \ P \ c,\\
+&A = $ ``Overall Assertion'' of all assertions in code without relaxation $ \rightarrow\\
+&A $ is not stable wrt. $ Rely(P, c) \rightarrow\\
+&\exists i, P_i $ is not stable wrt. $ Rely(P, c).
+\end{aligned}
+\end{equation*}
+
+One such example: $P_0: \{ x = 0 \}$, $P_1: \{ x = 10 \}$, $A: \{ x
+\in \{0, 10\} \}$. In this trivial case, $A$ does not have any
+relaxation or generalization, and the $NoRelaxation$ theorem should
+apply to this case.
+
+However, it should be quite hard to generate $A$ for cases that are
+not this trivial. Also, it could take more time generating such an
+$A$, so there is a tradeoff here.
+
+%%%%%%%%%%%%%%%%%%%%
+
+\subsubsection{With Relaxation}
+
+If $A$ is generated with some relaxation or generalization, then $A$'s
+failure of stability indicates nothing, it could still be the case
+that all assertions $P_i$ are stable wrt. the rely.
+
+A trivial counterexample for this is stated below:
+
+$P_0: \{ x = 0 \}$, $P_1: True$, $P_2: \{ x = 2 \}$. $A: \{ 0 \le x
+\le 2 \}$. Given a rely $r = Rely(\{ x = 1 \}, x := 100)$. Here $r$
+means that if the pre-condition $x = 1$ is satisfied, the command $x
+:= 100$ could be executed.
+
+In this case, $A$ is not stable wrt. $r$, but actually each assertion
+$P_i$ is stable wrt. $r$.
+
+The coarser the generation of $A$ is, the more likely that $A$ fails
+the stability check while all $P_i$ are indeed stable. Again, there is
+a tradeoff here.
+
+%%%%%%%%%%%%%%%%%%%%
+
+\subsubsection{After failure}
+
+When $A$ fails the stability check, one naive approach is to roughly
+divide the assertions into two halves and redo the generation and
+checking on each half (similar to binary search).
+
+We can also employ a smarter approach, first find out which subparts
+in $A$ make it unstable. For example, if $A$ is in the form of $A_1
+\land A_2 \land .. \land A_k \land ..$ and $A_k$ is the subpart that
+makes $A$ unstable. Then for all the assertions $P_i$ that can imply
+$A_k$, their ``Overall Assertion'' $A'$ will also fail the stability
+check.
+
+Then we can eliminate those assertions for now and check other
+``benign'' assertions first. The failed ones can be checked one by
+one.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Generating the ``Overall Assertion''}
+
+The key problem is how to generate such an assertion.
+
+\bigskip
+
+If only one assertion is given, we can use wlp/sp to generate all the
+assertions. So we can just assume that all assertions are in place.
+
+Let pre-condition $P_0$ be the first assertion (before $c_i$), $P_i$
+be the assertion after command $c_i$. $P_n$ is also the
+post-condition.
+
+Then we define some function $combine$ that combines all assertions in
+code into one assertion. Undoubtedly, the implementation of $combine$
+is crucial.
+
+\bigskip
+
+By summerizing the gc algorithm proof draft, there are at least $12$
+types of assertions:
+
+(aexp are arithmatic expressions)
+
+\begin{equation*}
+\begin{aligned}
+assertion &::=\\
+&| \ \forall var, assertion\\
+&| \ \exists var, assertion\\
+&| \ assertion \land assertion\\
+&| \ assertion \lor assertion\\
+&| \ assertion \implies assertion\\
+&| \ aexp = aexp\\
+&| \ aexp \neq aexp\\
+&| \ aexp \le aexp\\
+&| \ aexp \ge aexp\\
+&| \ aexp |-> aexp\\
+&| \ \{ .. \} \subseteq \{ .. \}\\
+&| \ aexp \in \{ .. \}\\
+\end{aligned}
+\end{equation*}
+
+One implementation (draft): $A$ is in the form of $A_1 \land A_2 \land
+.. \land A_k ..$ where each $A_i$ is an combined assertion wrt. one
+variable.
+
+When a new assertion $P_i$ is to be combined into an ``Overall
+Assertion'' $A$, if there is already some $A_k$ that deals with
+$P_i$'s concerning variable, generalize $A_k$ to make it also covers
+the case of $P_i$. Otherwise, $A = A \land P_i$.
+
+Example: $P_0: \{ x = 10 \}$, $P_1: \{ x = 11 \land y = 100\}$, $P_2: \{ y = 101 \land z = 1000 \}$. Then $A$ after each step may be:
+
+\begin{itemize}
+\item Before combining $P_0$ (initially): $A: True$
+\item After combining $P_0$: $A: x = 10$
+\item After combining $P_1$: $A: 10 \le x \le 11 \land y = 100$
+\item After combining $P_2$ (final): $A: 10 \le x \le 11 \land 100 \le y \le 101 \land z = 1000 $
+\end{itemize}
+
+// \textbf{TODO}, what if combining $x = 100$ and $x = 10 \lor y =
+20$??  Need to set rules for combining different shapes of assertions.
+
+\bigskip
+
+After $combine$, we generated a ``Overall Assertion'' $A$. $A$ should
+have the following property: $\forall$ assertion $P_i, P_i \implies
+A|_{P_i}$.  Here $A|_{P_i}$ represents those subparts in $A$ that are
+corresponding to $P_i$. e.g. $A: \{x > 10 \land y < 100\}, P_i: \{x =
+11\} \therefore A|_{P_i} = \{x > 10\}$.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{(Perhaps) Related papers}
+
+We searched for papers that have done similar things like combining
+assertions and use the result to represent the original assertions.
+
+Keywords used so far: predicate tranformers, composition, synthesis,
+etc.
+
+But most papers we read so far are not talking things we are
+interested in here..
+
+\subsection{\textsl{win} and \textsl{sin}: Predicate Transformers for Concurrency}
+
+\url{http://dl.acm.org/citation.cfm?id=78970}
+
+\bigskip
+
+In this paper, \textsl{win} and \textsl{sin} predicate transformers
+are defined to extend the Owicki-Gries method to allow reasoning about
+programs without specifying atomic actions.
+
+Owicki-Gries methods requires the operation to be atomic in order to
+be reasoned about. Lamport loosened this requirement in this paper so
+that non-atomic operations can also use Owick-Gries method for
+reasoning.
+
+Lamport defines everything from scratch. Two invariants $I$ and $I'$
+are defined to describe the state before and after some operation,
+respectively. The operation here may not be atomic, in other words it
+can be a set of atomic operations. Then Lamport uses $I$ and $I'$ for
+Owicki-Gries method as if they are pre-condition and post-condition.
+
+So this paper may not be relevant to our idea.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Weakest Precondition Synthesis for Compiler Optimizations}
+
+\url{http://link.springer.com/chapter/10.1007/978-3-642-54013-4_12}
+
+\bigskip
+
+This paper presents an algorithm which can generate the weakest
+(liberal) pre-conditions for some compiler optimizations wrt. some
+template programs such that when the wlp are satisfied, the category
+of optimizations on these programs won't introduce new bugs.
+
+This paper may not be relevant to our idea.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Reasoning about Program Composition}
+
+\url{https://www.cise.ufl.edu/tr/DOC/REP-1996-233.pdf}
+
+\bigskip
+
+The word ``composition'' in the title actually means ``parallel
+composition'', $||$ is the composition operator. So the
+``composition'' in this paper is like taking the programs in different
+threads altogether into consideration.
+
+They also define some ``guarantee'' operator using $||$ and also a
+predicate transformer $wg$ (weakest guarantee).
+
+$(P$ guarantees $Q).F$ means $\forall H, P$ holds in $F || H \implies
+Q$ holds in $F || H$. $wg.F.Q$ is the weakest P such that $(P$
+guarantees $Q).F$.
+
+Here $F$ and $H$ are programs, $P$ and $Q$ are the predicates on
+program $F$. (They also have predicates on states). There is no
+definition for ``program'', at least not in this paper. I assume this
+``program'' is equivalent to one command.
+
+So this paper is like providing a new theory for reasoning concurrent
+programs. But it may be irrelevant to our idea.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Reasoning about Composition Using Property Transformers and Their Conjugates}
+
+\url{http://link.springer.com/chapter/10.1007/3-540-44929-9_40}
+
+\bigskip
+
+This paper is also from K. Mani Chandy as the previous one (Reasoning
+about Program Composition). Comparing to the previous paper, this one
+is more general, ``composition'' no longer refers to ``parallel
+composition'' only. Instead, it's ``component composition''.
+
+This paper defines 6 predicate transformers which may be interesting:
+
+\begin{itemize}
+\item $WE.X$: What must be proved on a component to ensure that any
+  system that contains that component satisfies X.
+\item $SE.X$: What can be deduced of any system that contains at least
+  one component that satisfies X.
+\item $SU.X$: What can be deduced of any system that contains only
+  components that satisfy X.
+\item $WE^*.X$: What can be deduced on all components of any system
+  that satisfies X.
+\item $SE^*.X$: What must be proved on a system to ensure that all
+  components satisfy X.
+\item $SU^*.X$: What must be proved on a system to ensure that at
+  least one component satisfies X.
+\end{itemize}
+
+However, this papers is more like just presenting a model and talks
+about its methodology, it is irrelevant to the things I am interested
+in -- rules for assertion combination.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\end{document}
+
