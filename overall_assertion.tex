@@ -56,7 +56,9 @@ $Theorem &Representative:$ \forall A \ P \ c,\\
 Checking stability using such an ``Overall Assertion'' $A$ would cost
 less time if it saves some work. For example:
 
-$P_0: \{ x = 0 \}, P_1: \{ x = 1 \}, P_2: \{ x = 2 \} .. P_n: \{ x = n \}, A: \{ 0 \le x \le n\}$. So in this case, stability check only needs to check $A$ for once, instead of checking $P_i$ for $n$ times.
+$P_0: \{ x = 0 \}, P_1: \{ x = 1 \}, P_2: \{ x = 2 \} .. P_n: \{ x = n
+\}, A: \{ 0 \le x \le n\}$. So in this case, stability check only
+needs to check $A$ for once, instead of checking $P_i$ for $n$ times.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -139,6 +141,10 @@ The key problem is how to generate such an assertion.
 
 \bigskip
 
+% TODO Which one is true:
+% 1. Given only one assertion, use our own predicate transformer to generate everything
+% 2. All assertions ready (or given one assertion and use wlp/sp to generate others).
+
 If only one assertion is given, we can use wlp/sp to generate all the
 assertions. So we can just assume that all assertions are in place.
 
@@ -184,7 +190,8 @@ Assertion'' $A$, if there is already some $A_k$ that deals with
 $P_i$'s concerning variable, generalize $A_k$ to make it also covers
 the case of $P_i$. Otherwise, $A = A \land P_i$.
 
-Example: $P_0: \{ x = 10 \}$, $P_1: \{ x = 11 \land y = 100\}$, $P_2: \{ y = 101 \land z = 1000 \}$. Then $A$ after each step is:
+Example: $P_0: \{ x = 10 \}$, $P_1: \{ x = 11 \land y = 100\}$, $P_2:
+\{ y = 101 \land z = 1000 \}$. Then $A$ after each step is:
 
 \begin{itemize}
 \item Before combining $P_0$ (initially): $A: True$
