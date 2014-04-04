@@ -53,22 +53,28 @@ $Theorem &Representative:$ \forall A \ P \ c,\\
 \end{aligned}
 \end{equation*}
 
-Checking stability using such an ``Overall Assertion'' $A$ would cost
-less time if it saves some work. For example:
+where $Rely(P, c)$ is a rely such that if the pre-condition $P$ is
+sastified, the command $c$ may be executed by some other thread.
+
+\bigskip
+
+Checking stability using such an ``Overall Assertion'' $A$ could cost
+less time. For example:
 
 $P_0: \{ x = 0 \}, P_1: \{ x = 1 \}, P_2: \{ x = 2 \} .. P_n: \{ x = n
 \}, A: \{ 0 \le x \le n\}$. So in this case, stability check only
-needs to check $A$ for once, instead of checking $P_i$ for $n$ times.
+needs to check $A$ for once, instead of checking each $P_i$ which is
+$n$ times.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\subsection{What if failed}
+\subsection{If $A$ is not stable}
 
 But if $A$ is not stable w.r.t. some rely, it may still be the case that
 all assertion $P_i$ are stable w.r.t. that rely. This depends on how we
 generate $A$.
 
-\subsubsection{Without Relaxation}
+\subsubsection{Without relaxation}
 
 If $A$ is generated without any relaxation or generalization, then
 $A$'s failure of stability should indicate that there is some
@@ -89,12 +95,12 @@ relaxation or generalization, and the $NoRelaxation$ theorem should
 apply to this case.
 
 However, it should be quite hard to generate $A$ for cases that are
-not this trivial. Also, it could take more time generating such an
-$A$, so there is a tradeoff here.
+not this simple. Also, it could take more time generating such an $A$,
+so there is a tradeoff here.
 
 %%%%%%%%%%%%%%%%%%%%
 
-\subsubsection{With Relaxation}
+\subsubsection{With relaxation}
 
 If $A$ is generated with some relaxation or generalization, then $A$'s
 failure of stability indicates nothing, it could still be the case
@@ -102,13 +108,10 @@ that all assertions $P_i$ are stable w.r.t. the rely.
 
 A trivial counterexample for this is stated below:
 
-$P_0: \{ x = 0 \}$, $P_1: True$, $P_2: \{ x = 2 \}$. $A: \{ 0 \le x
-\le 2 \}$. Given a rely $r = Rely(\{ x = 1 \}, x := 100)$. Here $r$
-means that if the pre-condition $\{x = 1\}$ is satisfied, the command
-$x := 100$ could be executed.
-
-In this case, $A$ is not stable w.r.t. $r$, but actually each assertion
-$P_i$ is stable w.r.t. $r$.
+$P_0: \{ x = 0 \}$, $P_1: \{ True \}$, $P_2: \{ x = 2 \}$. $A: \{ 0
+\le x \le 2 \}$. Given a rely $r = Rely(\{ x = 1 \}, x := 100)$, then
+$A$ is not stable w.r.t. $r$, but actually each assertion $P_i$ is
+stable w.r.t. $r$.
 
 The coarser the generation of $A$ is, the more likely that $A$ fails
 the stability check while all $P_i$ are indeed stable. Again, there is
@@ -137,7 +140,7 @@ checked one by one.
 
 \section{Generating the ``Overall Assertion''}
 
-The key problem is how to generate such an assertion.
+The key problem of course is how to generate such an assertion.
 
 \bigskip
 
@@ -148,18 +151,15 @@ The key problem is how to generate such an assertion.
 If only one assertion is given, we can use wlp/sp to generate all the
 assertions. So we can just assume that all assertions are in place.
 
-Let pre-condition $P_0$ be the first assertion (before $c_i$), $P_i$
+Let pre-condition $P_0$ be the first assertion (before $c_1$), $P_i$
 be the assertion after command $c_i$. $P_n$ is also the
-post-condition.
-
-Then we define some function $combine$ that combines all assertions in
-code into one assertion. Undoubtedly, the implementation of $combine$
-is crucial.
+post-condition. Then we define some function $combine$ that combines
+all assertions in code into one assertion.
 
 \bigskip
 
-By summerizing the gc algorithm proof draft, there are at least $12$
-types of assertions:
+By summerizing in the gc algorithm proof draft, there are at least
+$12$ types of assertions:
 
 (aexp are arithmatic expressions)
 
@@ -182,12 +182,12 @@ assertion &::=\\
 \end{equation*}
 
 One implementation (draft): $A$ is in the form of $A_1 \land A_2 \land
-.. \land A_k ..$ where each $A_i$ is an combined assertion w.r.t. one
+.. \land A_k ..$ where each $A_i$ is a combined assertion w.r.t. one
 variable.
 
 When a new assertion $P_i$ is to be combined into an ``Overall
-Assertion'' $A$, if there is already some $A_k$ that deals with
-$P_i$'s concerning variable, generalize $A_k$ to make it also covers
+Assertion'' $A$, if there is already some $A_k$ that handles with
+$P_i$'s variables, generalize $A_k$ to make it also covers
 the case of $P_i$. Otherwise, $A = A \land P_i$.
 
 Example: $P_0: \{ x = 10 \}$, $P_1: \{ x = 11 \land y = 100\}$, $P_2:
@@ -200,8 +200,10 @@ Example: $P_0: \{ x = 10 \}$, $P_1: \{ x = 11 \land y = 100\}$, $P_2:
 \item After combining $P_2$ (finally): $A: 10 \le x \le 11 \land 100 \le y \le 101 \land z = 1000 $
 \end{itemize}
 
-// \textbf{TODO}, what if combining $x = 100$ and $x = 10 \lor y =
-20$??  Need to set rules for combining different shapes of assertions.
+\textbf{TODO} The difficult cases are those disjunction combinations
+and $\forall / \exists$ quantifiers, such as combining $x = 100$ and
+$x = 10 \lor y = 20$. We need to set rules for combining these
+different shapes of assertions and specify a clear algorithm.
 
 \bigskip
 
@@ -211,12 +213,17 @@ A|_{P_i}$.  Here $A|_{P_i}$ represents those subparts in $A$ that are
 corresponding to $P_i$. e.g. $A: \{x > 10 \land y < 100\}, P_i: \{x =
 11\} \therefore A|_{P_i} = \{x > 10\}$.
 
+Intuitively, the ``Overall Assertion'' $A$ is a combination of
+assertions concerning all variables as well as a generalization in
+terms of one single variable.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{(Perhaps) Related papers}
 
-We searched for papers that have done similar things like combining
-assertions and use the result to represent the original assertions.
+We searched for papers that may have done similar things like
+combining assertions and use the result to represent its original
+assertions.
 
 Keywords used so far: predicate tranformers, composition, synthesis,
 etc.
@@ -242,8 +249,8 @@ reasoning.
 Lamport defines everything from scratch. Two invariants $I$ and $I'$
 are defined to describe the state before and after some operation,
 respectively. The operation here may not be atomic, in other words it
-can be a set of atomic operations. Then Lamport uses $I$ and $I'$ for
-Owicki-Gries method as if they are pre-condition and post-condition.
+may be a set of atomic operations. Then Lamport uses $I$ and $I'$ for
+Owicki-Gries method just as they are pre-condition and post-condition.
 
 So this paper may not be relevant to our idea.
 
@@ -257,8 +264,9 @@ So this paper may not be relevant to our idea.
 
 This paper presents an algorithm which can generate the weakest
 (liberal) pre-conditions for some compiler optimizations w.r.t. some
-template programs such that when the wlp are satisfied, the category
-of optimizations on these programs won't introduce new bugs.
+template programs such that when the generated weakest preconditions
+are satisfied, the category of optimizations on these programs won't
+introduce new bugs.
 
 This paper may not be relevant to our idea.
 
@@ -300,8 +308,8 @@ programs. But it may be irrelevant to our idea.
 
 This paper is also from K. Mani Chandy as the previous one (Reasoning
 about Program Composition). Comparing to the previous paper, this one
-is more general, ``composition'' no longer refers to ``parallel
-composition'' only. Instead, it's ``component composition''.
+is more general, ``composition'' no longer solely refers to ``parallel
+composition''. Instead, it's ``component composition''.
 
 This paper defines 6 predicate transformers which may be interesting:
 
