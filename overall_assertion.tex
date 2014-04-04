@@ -7,6 +7,8 @@
 \usepackage{titlesec}
 \usepackage{fancyhdr}
 \usepackage{listings} % for code
+\usepackage{url} % the urls..
+%\usepackage{hyperref}
 
 \DeclareMathOperator*{\SIGMA}{\Sigma}
 
@@ -332,6 +334,26 @@ However, this paper is more like just presenting a model and talks
 about its methodology, it is irrelevant to the things I am interested
 in -- rules for assertion combination.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Explicit Stabilisation for Modular Rely-Guarantee Reasoning}
+
+\url{http://link.springer.com/chapter/10.1007\%2F978-3-642-11957-6_32}
+
+\bigskip
+
+$\lceil P \rceil_R$ and $\lfloor P \rfloor_R$ are defined in the paper
+to represent the strongest assertion that is weaker than $P$ as well
+as stable under $R$, and the weakest assertion that is stronger than
+$P$ as well as stable under $R$, respectively.
+
+In this way, the rely $R$ can be regarded as a parameter. So it may be
+possible to generate assertions with $R$ unspecified and just check
+the generated pre-condition and post-condition with actual relies.
+
+If this is possible, they are to some extent similar to our idea in
+this summary. I am still working on applying that idea to the gc
+algorithm proof draft to see if that actually works.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \end{document}
